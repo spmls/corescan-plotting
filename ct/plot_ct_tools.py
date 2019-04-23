@@ -19,20 +19,20 @@ from skimage.transform import downscale_local_mean
 import matplotlib as matplotlib
 import matplotlib.pyplot as plt
 import exifread
+import cv2
 
 
 ###############################################################################
-def ct_xml(directory=''):
+def ct_xml(filename=''):
     """
     read in GeoTek RXCT xml data to a dictionary
     """
     ## Get directory if not specified in function call
-    if not directory:
-        directory = filedialog.askdirectory()
-        if not directory:
+    if not filename:
+        filename = filedialog.askopenfilename()
+        if not filename:
             sys.exit()
-    dname = os.path.split(directory)[1]
-    fname = glob.glob(directory+"/*.xml")[0]
+    fname = filename
     ## Parse the xml file
     tree = xml.etree.ElementTree.parse(fname)
     root = tree.getroot()
@@ -48,7 +48,7 @@ def ct_xml(directory=''):
     return dic
 
 ###############################################################################
-def ct_in(filename=''):
+def ct_in(filename='',xml_fname=''):
     """
     read in RXCT data from reconstructed orthogonal views (tiffs)
     """
@@ -61,18 +61,90 @@ def ct_in(filename=''):
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     ## Read xml file
-    xml_dic = ct_xml(directory=directory)
+    if not xml_fname:
+        xml_fname = glob.glob(os.path.splitext(filename)[0]+'*.xml')[0]
+    xml_dic = ct_xml(xml_fname)
     return im, xml_dic
+###############################################################################
+def ct_crop_rotate(ct_data,plot=False):
+    """
+    crop out "air" in a ct image, and rotate to 90 degrees vertical
+    As of 4/22/2019, reading in image as 8 bit to perform thresholding,
+    apply rotation and cropping to 32 bit image (cv2 doesn't handle 16 bit well)
+    """
+    image_16bit = ct_data.astype('uint16')
+    image_8bit = (image_16bit/256).astype('uint8')
+    image_32bit = ct_data.astype('uint32')
+    # blur to reduce noise
+    blur = cv2.GaussianBlur(image_8bit,(3,3),0)
+    # Find edges of core using thresholding
+    ret, thresh = cv2.threshold(blur, 85, 255, 1)
+    thresh = 255-thresh
+    # Find contours of threshold image
+    contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    # Find the index of the largest contour
+    areas = [cv2.contourArea(c) for c in contours]
+    max_index = np.argmax(areas)
+    cnt=contours[max_index]
+    # Find the rotated rectangle that encloses this contour
+    rect = cv2.minAreaRect(cnt)
+    box = cv2.boxPoints(rect)
+    box=np.int0(box)
+    #crop image inside bounding box
+    scale = 1  # cropping margin, 1 == no margin
+    W = rect[1][0]
+    H = rect[1][1]
+
+    Xs = [i[0] for i in box]
+    Ys = [i[1] for i in box]
+    x1 = min(Xs)
+    x2 = max(Xs)
+    y1 = min(Ys)
+    y2 = max(Ys)
+
+    angle = rect[2]
+    rotated = False
+    if angle < -45:
+        angle += 90
+        rotated = True
+
+    center = (int((x1+x2)/2), int((y1+y2)/2))
+    size = (int(scale*(x2-x1)), int(scale*(y2-y1)))
+
+    M = cv2.getRotationMatrix2D((size[0]/2, size[1]/2), angle, 1.0)
+    cropped = cv2.getRectSubPix(np.float32(image_32bit), size, center) # converted to 32 bit
+    cropped = cv2.warpAffine(cropped, M, size)
+
+    croppedW = W if not rotated else H
+    croppedH = H if not rotated else W
+
+    image = cv2.getRectSubPix(
+        cropped, (int(croppedW*scale), int(croppedH*scale)), (size[0]/2, size[1]/2))
+
+    if plot is True:
+        fig = plt.figure(figsize=(11,17))
+        ax1=plt.subplot(121)
+        ax1.imshow(thresh,cmap = matplotlib.cm.gray)
+        ax1.add_patch(matplotlib.patches.Polygon(xy=box,edgecolor='red',linewidth=0.5,
+                                            fill=False))
+        ax1.set_title('Thresholded image with bounding rectangle')
+        ax2=plt.subplot(122)
+        ax2.imshow(image,cmap = matplotlib.cm.gray)
+        ax2.set_title('Cropped and rotated')
+        plt.savefig('crop_rotation.png',dpi=300)
+
+    return image
 
 ###############################################################################
-def ct_plot(ct_file='',vmin=0, vmax=50000):
+def ct_plot(ct_data, ct_xml,vmin=0, vmax=50000):
     """
     plot a CT scan image, using xml data to generate scale
 
     -dpi sets the saved image resolution at
     """
     ## Load the ct image file and xml data
-    im, ct_xml = ct_in(ct_file)
+    im = ct_data
+    ct_xml = ct_xml
     ## Get screen size for figure
     root = tkinter.Tk()
     pix2in = root.winfo_fpixels('1i')
@@ -90,6 +162,7 @@ def ct_plot(ct_file='',vmin=0, vmax=50000):
     ax.set_title(ct_xml['coreID'])
 
     return fig
+
 ###############################################################################
 def dpi_ct_plot(fig,ct_xml):
     """

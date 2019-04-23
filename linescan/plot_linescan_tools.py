@@ -25,17 +25,17 @@ from corescan_plotting.ct import plot_ct_tools
 
 
 ###############################################################################
-def linescan_xml(directory=''):
+def linescan_xml(filename=''):
     """
     read in GeoTek linescan xml data to a dictionary
     """
     ## Get directory if not specified in function call
-    if not directory:
-        directory = filedialog.askdirectory()
-        if not directory:
+    if not filename:
+        filename = filedialog.askopenfilename()
+        if not filename:
             sys.exit()
-    dname = os.path.split(directory)[1]
-    fname = glob.glob(directory+"/*.xml")[0]
+    fname = filename
+    dname = os.path.dirname(fname)
     ## Parse the xml file
     tree = xml.etree.ElementTree.parse(fname)
     root = tree.getroot()
@@ -53,7 +53,7 @@ def linescan_xml(directory=''):
     return dic
 
 ###############################################################################
-def linescan_in(filename=''):
+def linescan_in(filename='',xml_fname=''):
     """
     read in linescan data from from tif file
     """
@@ -66,7 +66,9 @@ def linescan_in(filename=''):
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     ## Read xml file
-    xml_dic = linescan_xml(directory=directory)
+    if not xml_fname:
+        xml_fname = glob.glob(os.path.splitext(filename)[0]+'*.xml')[0]
+    xml_dic = linescan_xml(xml_fname)
     return im, xml_dic
 
 ###############################################################################
