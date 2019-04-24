@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator)
 import warnings
-from corescan_plotting.ct import plot_ct_tools
+import plot_ct_tools
 
 
 ###############################################################################
@@ -72,16 +72,14 @@ def linescan_in(filename='',xml_fname=''):
     return im, xml_dic
 
 ###############################################################################
-def linescan_plot(ls_file=''):
+def linescan_plot(ls_data, ls_xml):
     """
     plot a linescan image, using xml data to generate scale
     """
-    ## Load the linescan image file and xml data
-    im, ls_xml = linescan_in(ls_file)
     ## Downscale from 16 bit tif to 8 bit
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        im = img_as_ubyte(im)
+        im = img_as_ubyte(ls_data)
     ## Get screen size for figure
     root = tkinter.Tk()
     pix2in = root.winfo_fpixels('1i')

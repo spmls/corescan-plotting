@@ -1,7 +1,5 @@
 # Don't track content of these folders
-ct/test_images/
 __pycache__/
-ct/ct_testing.py
 
 *.pyc
 *.pyo
