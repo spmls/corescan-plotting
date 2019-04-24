@@ -66,11 +66,13 @@ def ct_in(filename='',xml_fname=''):
     xml_dic = ct_xml(xml_fname)
     return im, xml_dic
 ###############################################################################
-def ct_crop_rotate(ct_data,plot=False):
+def ct_crop_rotate(ct_data,thresh_val, plot=False):
     """
     crop out "air" in a ct image, and rotate to 90 degrees vertical
     As of 4/22/2019, reading in image as 8 bit to perform thresholding,
     apply rotation and cropping to 32 bit image (cv2 doesn't handle 16 bit well)
+    Need to apply a threshold value (check plot to make sure whole core is
+    being selected and only background is masked out)
     """
     image_16bit = ct_data.astype('uint16')
     image_8bit = (image_16bit/256).astype('uint8')
@@ -78,7 +80,7 @@ def ct_crop_rotate(ct_data,plot=False):
     # blur to reduce noise
     blur = cv2.GaussianBlur(image_8bit,(3,3),0)
     # Find edges of core using thresholding
-    ret, thresh = cv2.threshold(blur, 85, 255, 1)
+    ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
     # Find contours of threshold image
     contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)

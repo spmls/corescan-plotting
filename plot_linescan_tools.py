@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator)
 import warnings
-import plot_ct_tools
+from corescan_plotting import plot_ct_tools
 
 
 ###############################################################################
