@@ -39,9 +39,9 @@ def ct_xml(filename=''):
     ## Add element tags and attributes to a dictionary
     dic = {}
     for elem in root.iter():
-        if isinteger(elem.text) is True:
+        if isinteger(elem.text):
             dic[elem.tag] = int(elem.text)
-        elif isfloat(elem.text) is True:
+        elif isfloat(elem.text):
             dic[elem.tag] = float(elem.text)
         else:
             dic[elem.tag] = elem.text
@@ -133,7 +133,6 @@ def ct_crop_rotate(ct_data,thresh_val, plot=False):
         ax2=plt.subplot(122)
         ax2.imshow(image,cmap = matplotlib.cm.gray)
         ax2.set_title('Cropped and rotated')
-        plt.savefig('crop_rotation.png',dpi=300)
 
     return image
 
@@ -238,6 +237,8 @@ def isfloat(x):
         a = float(x)
     except ValueError:
         return False
+    except TypeError:
+        return False
     else:
         return True
 
@@ -249,6 +250,8 @@ def isinteger(x):
     try:
         a = int(x)
     except ValueError:
+        return False
+    except TypeError:
         return False
     else:
         return True
