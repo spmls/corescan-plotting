@@ -21,7 +21,6 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
 import warnings
 from corescan_plotting import plot_ct_tools, plot_linescan_tools
 
-#%% Functions
 ###############################################################################
 def xrf_in(filename=''):
     """
@@ -81,7 +80,8 @@ def xrf_array2dict(header,data):
     dict["live time"] = data[:,4]
     dict["comp"] = data[:,5::2] # full array of compositional data
     dict["error"] = data[:,6::2] # array of errors in measurement
-
+    for i,e in enumerate(dict["elements"]): # create key-value pair for elements
+        dict[e] = dict["comp"][:,i]
     #Process dictionary
     dict = remove_open(dict)
     dict['comp'] = removeinvalid(dict['comp'],tol=500)
@@ -102,6 +102,8 @@ def remove_open(dict,k=1000000):
     not_closed = np.where(rounded_sums != k)
     keys = ['comp','depth','section number','section depth','xrf total counts',
             'live time','error']
+    for e in dict['elements']:
+        keys.append(e)
     for key in keys:
         dict[key] = np.delete(dict[key],not_closed,axis=0)
     return dict
@@ -114,7 +116,6 @@ def removeinvalid(array, tol=500.):
     """
     array[array < tol] = np.nan
     return array
-
 
 ###############################################################################
 def clr(array):
@@ -134,19 +135,99 @@ def clr(array):
         clr[r,:] = m[r,:] - np.nanmean(m[r,:])
     return clr
 
+###############################################################################
+def makelogratio(dict, ratio):
+    """
+    dict[ratio] is the log ratio of elements e1 and e2
+    ratio is a string in the form 'e1/e2' and e1 and e2 are
+    elements in dic['elements']. If not in the form 'e1/e2',
+    will not do anything (pass)
+    """
+    try:
+        e1, e2 = ratio.split('/')
+        dict[ratio] = np.log(dict[e1]/dict[e2])
+    except ValueError:
+        pass
+    return dict
+
+###############################################################################
+def nptsmooth(y, n, inf_nan=True, keep_nans=True):
+    """
+    smooths the data in y using a running mean
+	over 2*n+1 successive point, n points on each side of the
+	current point. At the ends of the series skewed or one-sided
+	means are used.
+
+    slightly modified from code ported from Matlab code written by:
+    Olof Liungman, 1997
+	Dept. of Oceanography, Earth Sciences Centre
+	Göteborg University, Sweden
+	E-mail: olof.liungman@oce.gu.se
+    """
+    y = y.copy()
+    if inf_nan:
+        y[y == np.inf] = np.nan
+        y[y == -np.inf] = np.nan
+    d = len(y)
+    filtr = np.isnan(y)
+    out = np.zeros_like(y)
+    temp = np.zeros((2*n+1, d-2*n))
+    temp[n,:] = y[n:-n]
+    for ii in range(n):
+        out[ii] = np.nanmean(y[:ii+n+1])
+        out[d-ii-1] = np.nanmean(y[d-ii-1-n:])
+        temp[ii,:] = y[ii:d-2*n+ii]
+        temp[ii+n+1,:] = y[ii+n+1:d-n+ii+1]
+    out[n:d-n] = np.nanmean(temp, axis=0)
+    if keep_nans:
+        out[filtr] = np.nan
+    return out
+
+###############################################################################
+def plot_xrf_clr(dict, elements, smooth=5 ):
+    """
+    plot centered log ratios or elemental ratios for elements/element pairs as a
+    function of depth.
+    elements = array of strings for elements/ratios to plot e.g. ['Al','Ti','Ca/K']
+    smooth = window size to smooth xrf data
+    """
+    if not elements:
+        elements = dict['elements']
+
+    colormap = plt.cm.tab20
+    norm = matplotlib.colors.Normalize(vmin=0,vmax = np.size(elements))
+    n = np.size(elements)
+    fig, ax = plt.subplots(nrows = 1, ncols = n, figsize=(3+n,8.5),
+                    sharey=True)
+    keep_nans=True # for npointssmooth
+    for i,e in enumerate(elements):
+        if '/' in e:
+            dict = makelogratio(dict,e)
+            p = ax[i].plot(dict[e],dict['depth'],color = colormap(norm(i)))
+        else:
+            clr_vector = dict['clr'][:,dict['elements'].index(e)]
+            p = ax[i].plot(clr_vector,dict['depth'],color = colormap(norm(i)))
+        if smooth:
+            p[0].set_alpha(0.4)
+            if '/' in e:
+                x = nptsmooth(dict[e], smooth, keep_nans=keep_nans)
+            else:
+                x = nptsmooth(dict['clr'][:,dict['elements'].index(e)],
+                smooth, keep_nans=keep_nans)
+            ax[i].plot(x, dict['depth'], color=colormap(norm(i)))
+        ax[i].set_title(e,color=colormap(norm(i)))
+        ax[i].yaxis.grid(color='k',linewidth=0.1)
+
+    ax[0].invert_yaxis()
+    loc = matplotlib.ticker.MultipleLocator(base=10.0)
+    ax[0].yaxis.set_major_locator(loc)
+    ax[-1].yaxis.set_tick_params(labelright=True)
 
 # %% TESTING
-filename="/Volumes/tsudisk/Cascadia/Floras Lake/Floras_XRF/VC22-667-817cm_arch\
-                ive/VC22-667-817cm_archive.out"
+filename="/Volumes/tsudisk/Cascadia/Floras Lake/Floras_XRF/VC22-667-817cm_archive/VC22-667-817cm_archive.out"
 dict = xrf_in(filename)
 
 
 # %% Test CLR plots
-elements = ['Al','Si','K','Ca','Ti','Fe']
-fig, ax = plt.subplots(nrows = 1, ncols = n, figsize=(11,8.5),
-                sharey=True)
-for i,e in enumerate(elements):
-    clr_vector = dict['clr'][:,dict['elements'].index(e)]
-    ax[i].plot(clr_vector,dict['depth'])
-    ax[i].set_title(e)
-ax[0].invert_yaxis()
+elements = ['Ca/Ti','K/Ti','Si/Ti','Si/Al','Fe']
+plot_xrf_clr(dict,elements=elements,smooth=3)
