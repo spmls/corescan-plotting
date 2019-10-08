@@ -184,7 +184,7 @@ def nptsmooth(y, n, inf_nan=True, keep_nans=True):
     return out
 
 ###############################################################################
-def plot_xrf_clr(dict, elements, smooth=5 ):
+def plot_xrf_clr(dict, elements, smooth=5,):
     """
     plot centered log ratios or elemental ratios for elements/element pairs as a
     function of depth.
@@ -200,7 +200,10 @@ def plot_xrf_clr(dict, elements, smooth=5 ):
     fig, ax = plt.subplots(nrows = 1, ncols = n, figsize=(3+n,8.5),
                     sharey=True)
     keep_nans=True # for npointssmooth
+    LinearLocator = matplotlib.ticker.LinearLocator
     for i,e in enumerate(elements):
+        ax[i].xaxis.set_major_locator(LinearLocator(2))
+        ax[i].xaxis.set_major_formatter(FormatStrFormatter('%d'))
         if '/' in e:
             dict = makelogratio(dict,e)
             p = ax[i].plot(dict[e],dict['depth'],color = colormap(norm(i)))
@@ -215,13 +218,27 @@ def plot_xrf_clr(dict, elements, smooth=5 ):
                 x = nptsmooth(dict['clr'][:,dict['elements'].index(e)],
                 smooth, keep_nans=keep_nans)
             ax[i].plot(x, dict['depth'], color=colormap(norm(i)))
+
+
+        ax[i].xaxis.set_ticks_position('bottom')
+
+        if i == n-1: # Far right plot needs depth ticks
+            ax[i].spines['left'].set_color('none')
+            ax[i].yaxis.set_ticks_position('right')
+            loc = matplotlib.ticker.MultipleLocator(base=10.0)
+            ax[i].yaxis.set_major_locator(loc)
+            ax[i].yaxis.set_tick_params(labelright=True)
+            ax[i].set_ylabel('Depth in core (cm)')
+            ax[i].yaxis.set_label_position('right')
+        else: # Plots in middle don't need depth ticks
+            ax[i].yaxis.set_ticks([])
+
         ax[i].set_title(e,color=colormap(norm(i)))
         ax[i].yaxis.grid(color='k',linewidth=0.1)
+        ax[0].invert_yaxis()
 
-    ax[0].invert_yaxis()
-    loc = matplotlib.ticker.MultipleLocator(base=10.0)
-    ax[0].yaxis.set_major_locator(loc)
-    ax[-1].yaxis.set_tick_params(labelright=True)
+    return fig
+
 
 # %% TESTING
 filename="/Volumes/tsudisk/Cascadia/Floras Lake/Floras_XRF/VC22-667-817cm_archive/VC22-667-817cm_archive.out"
@@ -229,5 +246,111 @@ dict = xrf_in(filename)
 
 
 # %% Test CLR plots
-elements = ['Ca/Ti','K/Ti','Si/Ti','Si/Al','Fe']
+elements = ['Ca/Ti','K/Ti','Si/Ti','Si/Al','Fe','P','S']
 plot_xrf_clr(dict,elements=elements,smooth=3)
+# %% Test plotting linescan and CT
+matplotlib.rcParams['pdf.fonttype'] = 42
+
+ct_file = '/Volumes/tsudisk/Cascadia/Floras Lake/Floras_RXCT/selected_orthogonal_views/VC22/FLO18-VC22-665-817cm/FLO18-VC22-665-817cm_XZView_corrected.TIF'
+ct, ct_xml = plot_ct_tools.ct_in(ct_file)
+ct = plot_ct_tools.ct_crop_rotate(ct,thresh_val=80, plot=False)
+
+ls_file = '/Volumes/tsudisk/Cascadia/Floras Lake/Floras_LineScan/VC22/FLO18-VC22_667-817cm/IM001_01.tif'
+im, ls_xml = plot_linescan_tools.linescan_in(ls_file)
+
+## Downscale linescan from 16 bit tif to 8 bit
+import skimage
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    im = skimage.img_as_ubyte(im)
+ratio = 150/7.6 # for a typical, 150 cm x 7.6 cm core
+
+## Figure
+## Get screen size for figure
+root = tkinter.Tk()
+pix2in = root.winfo_fpixels('1i')
+screen_width = root.winfo_screenwidth()/pix2in
+screen_height = root.winfo_screenheight()/pix2in
+fig = plt.figure(figsize=(screen_width,screen_height))
+
+nplots = np.size(elements)+2
+
+# Plot CT
+vmin = 15000
+vmax = 30000
+ax = plt.subplot(1,nplots,1)
+ct_img = plt.imshow(ct, aspect=aspect, extent=(0,ct_xml['physical-width'],
+                ct_xml['physical-height']+ct_xml['physical-top']/100,
+                ct_xml['physical-top']/100),vmin=vmin,vmax=vmax,
+                cmap=matplotlib.cm.CMRmap)
+ax.yaxis.set_major_locator(MultipleLocator(10))
+ax.yaxis.set_minor_locator(MultipleLocator(1))
+ax.set_xlim(0,ct_xml['physical-width'])
+ax.set_ylim(ct_xml['physical-height']+ct_xml['physical-top']/100,
+                    ct_xml['physical-top']/100) ## set equal to the linescan
+ax.get_xaxis().set_visible(False)
+ax.set_anchor('NW')
+
+# Plot LineScan
+ax = plt.subplot(1,nplots,2)
+plt.imshow(im, aspect=aspect, extent=(0,ls_xml['physical-width'],\
+                    ls_xml['physical-top']+ls_xml['physical-height'],\
+                    ls_xml['physical-top']))
+ax.yaxis.set_major_locator(MultipleLocator(10))
+ax.yaxis.set_minor_locator(MultipleLocator(1))
+ax.yaxis.tick_right()
+ax.set_xlim(0,ls_xml['physical-width'])
+ax.set_ylim(ls_xml['physical-height']+ls_xml['physical-top'],
+                    ls_xml['physical-top'])
+ax.get_xaxis().set_visible(False)
+ax.set_anchor('NW')
+for spine in ax.spines.values():
+    spine.set_visible(False)
+
+# Plot XRF
+keep_nans=True # for npointssmooth
+LinearLocator = matplotlib.ticker.LinearLocator
+colormap = plt.cm.tab20
+norm = matplotlib.colors.Normalize(vmin=0,vmax = np.size(elements))
+n = np.size(elements)
+smooth=3
+depth = ls_xml['physical-top'] + dict['section depth']
+for i,e in enumerate(elements):
+    ax = plt.subplot(1, nplots, i+3)
+    ax.xaxis.set_major_locator(LinearLocator(2))
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+    ax.set_ylim(np.max(depth),np.min(depth))
+    if '/' in e:
+        dict = makelogratio(dict,e)
+        p = ax.plot(dict[e],depth,color = colormap(norm(i)))
+    else:
+        clr_vector = dict['clr'][:,dict['elements'].index(e)]
+        p = ax.plot(clr_vector,depth,color = colormap(norm(i)))
+    if smooth:
+        p[0].set_alpha(0.4)
+        if '/' in e:
+            x = nptsmooth(dict[e], smooth, keep_nans=keep_nans)
+        else:
+            x = nptsmooth(dict['clr'][:,dict['elements'].index(e)],
+            smooth, keep_nans=keep_nans)
+        ax.plot(x, depth, color=colormap(norm(i)))
+
+
+    ax.xaxis.set_ticks_position('bottom')
+
+    if i == n-1: # Far right plot needs depth ticks
+        ax.spines['left'].set_color('none')
+        ax.yaxis.set_ticks_position('right')
+        loc = matplotlib.ticker.MultipleLocator(base=10.0)
+        ax.yaxis.set_major_locator(loc)
+        ax.yaxis.set_tick_params(labelright=True)
+        ax.set_ylabel('Depth in core (cm)')
+        ax.yaxis.set_label_position('right')
+    else: # Plots in middle don't need depth ticks
+        ax.yaxis.set_ticks([])
+
+    ax.set_title(e,color=colormap(norm(i)))
+    ax.yaxis.grid(color='k',linewidth=0.1)
+
+plt.savefig('test.pdf',format='pdf',bbox_inches='tight')
+    
