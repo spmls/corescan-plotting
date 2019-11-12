@@ -130,19 +130,13 @@ def ct_crop_rotate(ct_data,ct_xml,thresh_val, plot=False):
     xml['physical-height'] = image.shape[0]/xml['pixels-per-CM']
     xml['pixel-width'] = image.shape[1]
     xml['scan-lines'] = image.shape[0]
-    xml['physical-top'] = top_depths[i]*100.
 
     if plot is True:
-        root = tkinter.Tk()
-        pix2in = root.winfo_fpixels('1i')
-        screen_width = root.winfo_screenwidth()/pix2in
-        screen_height = root.winfo_screenheight()/pix2in
-        image_h2w = round(ct_xml['physical-height']/ct_xml['physical-width'])
-        fig = plt.figure(figsize=(screen_height/image_h2w, screen_height))
+        fig = plt.figure(figsize=(11,17))
         ax1=plt.subplot(121)
         ax1.imshow(thresh,cmap = matplotlib.cm.gray)
-        ax1.add_patch(matplotlib.patches.Polygon(xy=box,edgecolor='red',linewidth=0.5,
-                                            fill=False))
+        ax1.add_patch(matplotlib.patches.Polygon(xy=box,edgecolor='red',
+                                            linewidth=1.0, fill=False))
         ax1.set_title('Thresholded image with bounding rectangle')
         ax2=plt.subplot(122)
         ax2.imshow(image,cmap = matplotlib.cm.gray)
@@ -151,7 +145,7 @@ def ct_crop_rotate(ct_data,ct_xml,thresh_val, plot=False):
     return image, xml
 
 ###############################################################################
-def ct_crop_rotate_multiple(ct_data,thresh_val,top_depths,plot=False):
+def ct_crop_rotate_multiple(ct_data,ct_xml,thresh_val,top_depths,plot=False):
     """
     crops out "air" in a ct image, and rotates to 90 degrees vertical for
     a scan with multiple core segments (2-3 Russian cores, for example)
@@ -160,6 +154,7 @@ def ct_crop_rotate_multiple(ct_data,thresh_val,top_depths,plot=False):
     apply rotation and cropping to 32 bit image (cv2 doesn't handle 16 bit well)
 
     ct_data: ct image object read in by "ct_in"
+    ct_xml: xml data associated with ct_data
     thresh_val: threshold value used to classify pixel intensities in grayscale
     top_depths: depth of the upper parts of each 'segment' in the scan
     plot: output plots of image processing steps, default is False
@@ -177,9 +172,15 @@ def ct_crop_rotate_multiple(ct_data,thresh_val,top_depths,plot=False):
     # Find contours of threshold image
     contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
                                             cv2.CHAIN_APPROX_SIMPLE)
-    # Find the index of the largest contour
+
+    # Sort contours from top to bottom
+    boundingBoxes = [cv2.boundingRect(c) for c in contours]
+    (contours, boundingBoxes) = zip(*sorted(zip(contours, boundingBoxes),
+                                key=lambda b:b[1][1],reverse=False))
+
+    # Find the indices of the largest n contours
     areas = np.array([cv2.contourArea(c) for c in contours])
-    max_indices = areas.argsort()[-1*n:][::-1]
+    max_indices = np.argpartition(areas,-n)[-n:]
 
     cropped_rotated_images = []
     cropped_rotated_xml = []
@@ -238,30 +239,31 @@ def ct_crop_rotate_multiple(ct_data,thresh_val,top_depths,plot=False):
                                 xml['physical-top']/100+xml['physical-height']))
         cropped_rotated_xml.append(xml)
 
-        # Plot steps if plot=True
-        if plot is True:
-            ## Get screen size for figure
-            root = tkinter.Tk()
-            pix2in = root.winfo_fpixels('1i')
-            screen_width = root.winfo_screenwidth()/pix2in
-            screen_height = root.winfo_screenheight()/pix2in
-            image_h2w = round(ct_xml['physical-height']/ct_xml['physical-width'])
-            fig = plt.figure(figsize=(screen_height/image_h2w, screen_height))
+    # Plot steps if plot=True
+    if plot is True:
+        ## Get screen size for figure
+        # root = tkinter.Tk()
+        # pix2in = root.winfo_fpixels('1i')
+        # screen_width = root.winfo_screenwidth()/pix2in
+        # screen_height = root.winfo_screenheight()/pix2in
+        # image_h2w = round(ct_xml['physical-height']/ct_xml['physical-width'])
+        # fig = plt.figure(figsize=(screen_height/image_h2w, screen_height))
+        fig = plt.figure(figsize=(11,17))
+        ax1=plt.subplot(131)
+        ax1.imshow(ct_data,cmap = matplotlib.cm.gray)
+        ax1.set_title('original image')
 
-            ax1=plt.subplot(131)
-            ax1.imshow(ct_data,cmap = matplotlib.cm.gray)
-            ax1.set_title('original image')
+        ax2=plt.subplot(132)
+        ax2.imshow(blur,cmap = matplotlib.cm.gray)
+        ax2.set_title('blur')
 
-            ax2=plt.subplot(132)
-            ax2.imshow(blur,cmap = matplotlib.cm.gray)
-            ax2.set_title('blur')
-
-            ax3=plt.subplot(133)
-            ax3.imshow(thresh,cmap=matplotlib.cm.gray)
-            for b in boxes:
-                ax3.add_patch(matplotlib.patches.Polygon(xy=b,edgecolor='red',linewidth=1.0,
-                                                    fill=False))
-            ax3.set_title('thresholded and contoured')
+        ax3=plt.subplot(133)
+        ax3.imshow(thresh,cmap=matplotlib.cm.gray)
+        for b in boxes:
+            ax3.add_patch(matplotlib.patches.Polygon(xy=b,edgecolor='red',
+                                                linewidth=1.0,
+                                                fill=False))
+        ax3.set_title('thresholded and contoured')
     return cropped_rotated_images, cropped_rotated_xml
 
 ###############################################################################
