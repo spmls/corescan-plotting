@@ -249,21 +249,17 @@ def ct_crop_rotate_multiple(ct_data,ct_xml,thresh_val,top_depths,plot=False):
         # image_h2w = round(ct_xml['physical-height']/ct_xml['physical-width'])
         # fig = plt.figure(figsize=(screen_height/image_h2w, screen_height))
         fig = plt.figure(figsize=(11,17))
-        ax1=plt.subplot(131)
+        ax1=plt.subplot(121)
         ax1.imshow(ct_data,cmap = matplotlib.cm.gray)
         ax1.set_title('original image')
 
-        ax2=plt.subplot(132)
-        ax2.imshow(blur,cmap = matplotlib.cm.gray)
-        ax2.set_title('blur')
-
-        ax3=plt.subplot(133)
-        ax3.imshow(thresh,cmap=matplotlib.cm.gray)
+        ax2=plt.subplot(122)
+        ax2.imshow(thresh,cmap=matplotlib.cm.gray)
         for b in boxes:
-            ax3.add_patch(matplotlib.patches.Polygon(xy=b,edgecolor='red',
+            ax2.add_patch(matplotlib.patches.Polygon(xy=b,edgecolor='red',
                                                 linewidth=1.0,
                                                 fill=False))
-        ax3.set_title('thresholded and contoured')
+        ax2.set_title('thresholded and contoured')
     return cropped_rotated_images, cropped_rotated_xml
 
 ###############################################################################
