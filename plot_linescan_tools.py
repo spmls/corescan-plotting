@@ -63,6 +63,8 @@ def linescan_in(filename='',xml_fname=''):
         if not filename:
             sys.exit()
     im = tifffile.imread(filename)
+    if np.size(np.shape(im)) > 2: # normalize rgb bands to 0.0 to 1.0
+        im = bands_to_rgb(im)
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     ## Read xml file
@@ -175,3 +177,20 @@ def get_ax_size(ax):
     bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     width, height = bbox.width, bbox.height
     return width,height
+###############################################################################
+def normalize(array):
+    """
+    Normalizes numpy arrays into scale 0.0 - 1.0
+    """
+    array_min, array_max = array.min(), array.max()
+    return ((array-array_min)/(array_max-array_min))
+###############################################################################
+def bands_to_rgb(rgb_array):
+    """
+    Takes a m x n x 3 array (assumes in order of R, G, B), normalizes values to 0.0
+    - 1.0, and then stacks into one array for plotting in imshow
+    """
+    r = normalize(rgb_array[:,:,0])
+    g = normalize(rgb_array[:,:,1])
+    b = normalize(rgb_array[:,:,2])
+    return np.dstack((r,g,b))
