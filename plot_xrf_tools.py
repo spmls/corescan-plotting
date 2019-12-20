@@ -85,6 +85,7 @@ def xrf_array2dict(header,data):
         dict[e] = dict["comp"][:,i]
     #Process dictionary
     dict = remove_open(dict)
+    if
     dict['comp'] = removeinvalid(dict['comp'],tol=500)
     dict['clr'] = clr(dict['comp'])
 
@@ -110,11 +111,14 @@ def remove_open(dict,k=1000000):
     return dict
 
 ###############################################################################
-def removeinvalid(array, tol=500.):
+def removeinvalid(array, mode='geochem',tol=500.):
     """
     remove all XRF measurements whose concentrations are less than 'tol'.
     geotek recommends 500+ ppm in geochem mode, 50+ ppm in soil mode.
     """
+    if not tol:
+        if 'soil' in mode:
+            tol = 50.
     array[array < tol] = np.nan
     return array
 
