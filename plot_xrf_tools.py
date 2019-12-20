@@ -245,7 +245,8 @@ def plot_xrf_clr(dict, elements, smooth=5,):
 ###############################################################################
 def plot_ct_ls_xrf_clr(ct_image, ct_xml,
                         ls_image, ls_xml,
-                        dict, elements, smooth=5):
+                        dict, elements, smooth=5,
+                        ct_vmin=15000,ct_vmax=30000):
     """
     plot centered log ratio of elements and ratios in 'elements' next to CT and
     linescan images.
@@ -265,15 +266,14 @@ def plot_ct_ls_xrf_clr(ct_image, ct_xml,
     fig = plt.figure(figsize=(screen_width*nplots/12,screen_height))
     plt.clf()
     # Plot CT
-    vmin = 15000
-    vmax = 30000
     aspect=1
     ax = plt.subplot(1,nplots,1)
-    ct_img = plt.imshow(ct, aspect=aspect, extent=(0,ct_xml['physical-width'],
+    ct_img = plt.imshow(ct_image, aspect=aspect,
+                    extent=(0,ct_xml['physical-width'],
                     ct_xml['physical-height']+ct_xml['physical-top']/100,
-                    ct_xml['physical-top']/100),vmin=vmin,vmax=vmax,
+                    ct_xml['physical-top']/100),vmin=ct_vmin,vmax=ct_vmax,
                     cmap=matplotlib.cm.CMRmap)
-    ls_img = plt.imshow(im, aspect=aspect,
+    ls_img = plt.imshow(ls_image, aspect=aspect,
                         extent=(ct_xml['physical-width']+
                         0.2*ct_xml['physical-width'],
                         ct_xml['physical-width']+ls_xml['physical-width'],
@@ -286,6 +286,7 @@ def plot_ct_ls_xrf_clr(ct_image, ct_xml,
                         ct_xml['physical-top']/100) ## set equal to the linescan
     ax.get_xaxis().set_visible(False)
     ax.set_anchor('NW')
+    im_pos=ax.get_position()
 
     # Plot XRF
     keep_nans=True # for npointssmooth
@@ -297,11 +298,12 @@ def plot_ct_ls_xrf_clr(ct_image, ct_xml,
     depth = ls_xml['physical-top'] + dict['section depth']
     for i,e in enumerate(elements):
         ax = plt.subplot(1, nplots, i+2)
-        pos = ax.get_position()
-        ax.set_position([pos.x0-0.03,pos.y0,pos.width,pos.height])
+        pos=ax.get_position()
+        ax.set_position([pos.x0,im_pos.y0,pos.width,im_pos.height])
         ax.xaxis.set_major_locator(LinearLocator(2))
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
-        ax.set_ylim(np.max(depth),np.min(depth))
+        ax.set_ylim(ct_xml['physical-height']+ct_xml['physical-top']/100,
+                            ct_xml['physical-top']/100)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)
         if '/' in e:
