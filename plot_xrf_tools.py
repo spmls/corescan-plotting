@@ -85,7 +85,6 @@ def xrf_array2dict(header,data):
         dict[e] = dict["comp"][:,i]
     #Process dictionary
     dict = remove_open(dict)
-    if
     dict['comp'] = removeinvalid(dict['comp'],tol=500)
     dict['clr'] = clr(dict['comp'])
 
@@ -156,6 +155,21 @@ def makelogratio(dict, ratio):
     return dict
 
 ###############################################################################
+def makeppmratio(dict, ratio):
+    """
+    dict[ratio] is the ratio of ppm concentrations of elements e1 and e2
+    ratio is a string in the form 'e1/e2' and e1 and e2 are
+    elements in dic['elements']. If not in the form 'e1/e2',
+    will not do anything (pass)
+    """
+    try:
+        e1, e2 = ratio.split('/')
+        dict[ratio] = dict[e1]/dict[e2]
+    except ValueError:
+        pass
+    return dict
+
+###############################################################################
 def nptsmooth(y, n, inf_nan=True, keep_nans=True):
     """
     smooths the data in y using a running mean
@@ -189,74 +203,107 @@ def nptsmooth(y, n, inf_nan=True, keep_nans=True):
         if keep_nans:
             out[filtr] = np.nan
     return out
-
 ###############################################################################
-def plot_xrf_clr(dict, elements, smooth=5,):
+def plot_xrf(dict, elements, smooth=5, clr=False):
     """
-    plot centered log ratios or elemental ratios for elements/element pairs as a
-    function of depth.
+    plot parts per mil (or centered log ratios) elemental ratios for
+    elements/element pairs as a function of depth.
     elements = array of strings for elements/ratios to plot e.g. ['Al','Ti','Ca/K']
     smooth = window size to smooth xrf data
+    clr = False by default, will plot centered log ratios if True
     """
     if not elements:
         elements = dict['elements']
-
+    root = tkinter.Tk()
+    pix2in = root.winfo_fpixels('1i')
+    screen_width = root.winfo_screenwidth()/pix2in*0.75
+    screen_height = root.winfo_screenheight()/pix2in*0.75
+    screen_aspect = screen_width/screen_height
     colormap = plt.cm.tab20
     norm = matplotlib.colors.Normalize(vmin=0,vmax = np.size(elements))
-    n = np.size(elements)
-    fig, ax = plt.subplots(nrows = 1, ncols = n, figsize=(3+n,8.5),
-                    sharey=True)
+    nplots = np.size(elements)
+    fig = plt.figure(figsize=(screen_width*nplots/12,screen_height))
     keep_nans=True # for npointssmooth
     LinearLocator = matplotlib.ticker.LinearLocator
+
     for i,e in enumerate(elements):
-        ax[i].xaxis.set_major_locator(LinearLocator(2))
-        ax[i].xaxis.set_major_formatter(FormatStrFormatter('%d'))
+        ax = plt.subplot(1,nplots,i+1)
+        ax.xaxis.set_major_locator(LinearLocator(2))
+        ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
         if '/' in e:
-            dict = makelogratio(dict,e)
-            p = ax[i].plot(dict[e],dict['depth'],color = colormap(norm(i)))
+            if clr:
+                dict = makelogratio(dict,e)
+            else:
+                dict = makeppmratio(dict,e)
+            p = ax.plot(dict[e],dict['depth'],color = colormap(norm(i)))
         else:
-            clr_vector = dict['clr'][:,dict['elements'].index(e)]
-            p = ax[i].plot(clr_vector,dict['depth'],color = colormap(norm(i)))
+            if clr:
+                clr_vector = dict['clr'][:,dict['elements'].index(e)]
+                p = ax[i].plot(clr_vector,dict['depth'],color = colormap(norm(i)))
+            else:
+                ppm_vector = dict[e]
+                p = ax.plot(ppm_vector,dict['depth'],color = colormap(norm(i)))
         if smooth:
             p[0].set_alpha(0.4)
             if '/' in e:
                 x = nptsmooth(dict[e], smooth, keep_nans=keep_nans)
             else:
-                x = nptsmooth(dict['clr'][:,dict['elements'].index(e)],
-                smooth, keep_nans=keep_nans)
-            ax[i].plot(x, dict['depth'], color=colormap(norm(i)))
+                if clr:
+                    x = nptsmooth(dict['clr'][:,dict['elements'].index(e)],
+                    smooth, keep_nans=keep_nans)
+                else:
+                    x = nptsmooth(dict[e],smooth, keep_nans=keep_nans)
+            ax.plot(x, dict['depth'], color=colormap(norm(i)))
 
+        ax.xaxis.set_ticks_position('bottom')
+        plt.xticks(rotation=90)
 
-        ax[i].xaxis.set_ticks_position('bottom')
-
-        if i == n-1: # Far right plot needs depth ticks
-            ax[i].spines['left'].set_color('none')
-            ax[i].yaxis.set_ticks_position('right')
+        if i == 0: # Far left plot needs depth ticks
+            ax.yaxis.set_ticks_position('left')
             loc = matplotlib.ticker.MultipleLocator(base=10.0)
-            ax[i].yaxis.set_major_locator(loc)
-            ax[i].yaxis.set_tick_params(labelright=True)
-            ax[i].set_ylabel('Depth in core (cm)')
-            ax[i].yaxis.set_label_position('right')
-        else: # Plots in middle don't need depth ticks
-            ax[i].yaxis.set_ticks([])
+            loc1 = matplotlib.ticker.MultipleLocator(base=1.0)
+            ax.yaxis.set_major_locator(loc)
+            ax.yaxis.set_minor_locator(loc1)
+            ax.yaxis.set_tick_params(labelleft=True)
+            ax.set_ylabel('Depth in core (cm)')
+            ax.yaxis.set_label_position('left')
+            ax.spines['left'].set_visible(True)
 
-        ax[i].set_title(e,color=colormap(norm(i)))
-        ax[i].yaxis.grid(color='k',linewidth=0.1)
-        ax[0].invert_yaxis()
+        elif i == nplots-1: # Far right plot needs depth ticks
+            ax.yaxis.set_ticks_position('right')
+            loc = matplotlib.ticker.MultipleLocator(base=10.0)
+            loc1 = matplotlib.ticker.MultipleLocator(base=1.0)
+            ax.yaxis.set_major_locator(loc)
+            ax.yaxis.set_minor_locator(loc1)
+            ax.yaxis.set_tick_params(labelright=True)
+            ax.set_ylabel('Depth in core (cm)')
+            ax.yaxis.set_label_position('right')
+            ax.spines['right'].set_visible(True)
+
+        else: # Plots in middle don't need depth ticks
+            ax.yaxis.set_ticks([])
+
+        if ax.get_xlim()[0] < 0.: # avoid negative x axis limits
+            ax.set_xlim(0,ax.get_xlim()[1])
+
+        ax.set_title(e,color=colormap(norm(i)))
+        # ax.yaxis.grid(color='k',linewidth=0.1)
+        ax.invert_yaxis()
 
     return fig
 
 ###############################################################################
-def plot_ct_ls_xrf_clr(ct_image, ct_xml,
+def plot_ct_ls_xrf(ct_image, ct_xml,
                         ls_image, ls_xml,
-                        dict, elements, smooth=5,
+                        dict, elements, clr=False, smooth=5,
                         ct_vmin=15000,ct_vmax=30000):
     """
-    plot centered log ratio of elements and ratios in 'elements' next to CT and
-    linescan images.
+    plot ppm or centered log ratio of elements and ratios in 'elements' next to
+     CT and linescan images.
 
     use "ct_in" and "ls_in" to complete image processing before running
-    "plot_xrf_clr"
+    "plot_xrf_clr".  Set clr=True to plot centered log ratios.  By default,
+    "parts per mil" are plotted.
     """
     root = tkinter.Tk()
     pix2in = root.winfo_fpixels('1i')
@@ -300,29 +347,41 @@ def plot_ct_ls_xrf_clr(ct_image, ct_xml,
     n = np.size(elements)
     smooth=smooth
     depth = ls_xml['physical-top'] + dict['section depth']
+
+
     for i,e in enumerate(elements):
-        ax = plt.subplot(1, nplots, i+2)
-        pos=ax.get_position()
-        ax.set_position([pos.x0,im_pos.y0,pos.width,im_pos.height])
+        ax = plt.subplot(1,nplots,i+2)
         ax.xaxis.set_major_locator(LinearLocator(2))
         ax.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+        pos=ax.get_position()
+        ax.set_position([pos.x0,im_pos.y0,pos.width,im_pos.height])
         ax.set_ylim(ct_xml['physical-height']+ct_xml['physical-top']/100,
                             ct_xml['physical-top']/100)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)
         if '/' in e:
-            dict = makelogratio(dict,e)
-            p = ax.plot(dict[e],depth,color = colormap(norm(i)))
+            if clr:
+                dict = makelogratio(dict,e)
+            else:
+                dict = makeppmratio(dict,e)
+            p = ax.plot(dict[e],dict['depth'],color = colormap(norm(i)))
         else:
-            clr_vector = dict['clr'][:,dict['elements'].index(e)]
-            p = ax.plot(clr_vector,depth,color = colormap(norm(i)))
+            if clr:
+                clr_vector = dict['clr'][:,dict['elements'].index(e)]
+                p = ax[i].plot(clr_vector,depth,color = colormap(norm(i)))
+            else:
+                ppm_vector = dict[e]
+                p = ax.plot(ppm_vector,depth,color = colormap(norm(i)))
         if smooth:
             p[0].set_alpha(0.4)
             if '/' in e:
                 x = nptsmooth(dict[e], smooth, keep_nans=keep_nans)
             else:
-                x = nptsmooth(dict['clr'][:,dict['elements'].index(e)],
-                smooth, keep_nans=keep_nans)
+                if clr:
+                    x = nptsmooth(dict['clr'][:,dict['elements'].index(e)],
+                    smooth, keep_nans=keep_nans)
+                else:
+                    x = nptsmooth(dict[e],smooth, keep_nans=keep_nans)
             ax.plot(x, depth, color=colormap(norm(i)))
         ax.xaxis.set_ticks_position('bottom')
         if i == n-1: # Far right plot needs depth ticks
