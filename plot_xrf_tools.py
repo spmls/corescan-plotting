@@ -256,7 +256,8 @@ def plot_xrf(dict, elements, smooth=5, clr=False):
             ax.plot(x, dict['depth'], color=colormap(norm(i)))
 
         ax.xaxis.set_ticks_position('bottom')
-        plt.xticks(rotation=90)
+        if not clr:
+            plt.xticks(rotation=90)
 
         if i == 0: # Far left plot needs depth ticks
             ax.yaxis.set_ticks_position('left')
@@ -383,6 +384,8 @@ def plot_ct_ls_xrf(ct_image, ct_xml,
                 else:
                     x = nptsmooth(dict[e],smooth, keep_nans=keep_nans)
             ax.plot(x, depth, color=colormap(norm(i)))
+        if not clr:
+            plt.xticks(rotation=90)
         ax.xaxis.set_ticks_position('bottom')
         if i == n-1: # Far right plot needs depth ticks
             ax.spines['left'].set_visible(False)
