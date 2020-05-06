@@ -12,4 +12,6 @@ dependencies:
   - scikit-image
   - scipy
   - tk
+  - exifread
+  - scipy
   

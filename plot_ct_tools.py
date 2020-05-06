@@ -18,6 +18,7 @@ from skimage.external import tifffile
 from skimage.transform import downscale_local_mean
 import matplotlib as matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider, Button, RadioButtons
 import exifread
 import cv2
 
@@ -83,7 +84,7 @@ def ct_crop_rotate(ct_data,ct_xml,thresh_val, plot=False):
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
     # Find contours of threshold image
-    cnt_im,contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
+    contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
                                             cv2.CHAIN_APPROX_SIMPLE)
     # Find the index of the largest contour
     areas = [cv2.contourArea(c) for c in contours]
@@ -401,3 +402,36 @@ def get_ax_size(ax):
     bbox = ax.get_window_extent().transformed(fig.dpi_scale_trans.inverted())
     width, height = bbox.width, bbox.height
     return width,height
+
+###############################################################################
+def count_laminae(ct_data,ct_xml,vmin=None,vmax=None):
+    """
+    automate counting of laminae
+    """
+    ## Load the ct image file and xml data
+    im = ct_data
+    ct_xml = ct_xml
+    ## Get screen size for figure
+    root = tkinter.Tk()
+    pix2in = root.winfo_fpixels('1i')
+    screen_width = root.winfo_screenwidth()/pix2in
+    screen_height = root.winfo_screenheight()/pix2in
+    image_h2w = round(ct_xml['physical-height']/ct_xml['physical-width'])
+    fig = plt.figure(figsize=(screen_height/image_h2w, screen_height))
+    ## Calculate vmin and vmax automatically
+    if vmin is None:
+        vmin = np.min(im)
+    if vmax is None:
+        vmax = np.max(im)
+    ## Plot images
+    aspect = 'equal'
+    ax = plt.subplot(1, 1, 1)
+    ct_plot = plt.imshow(im, aspect=aspect, extent=(0,ct_xml['physical-width'],\
+                        ct_xml['physical-top']/100+ct_xml['physical-height'],\
+                        ct_xml['physical-top']/100),
+                        vmin=vmin,vmax=vmax)
+    ax.set_title(ct_xml['coreID'])
+    vmin_slider = Slider(ct_plot,'vmin',valmin=vmin,valmax=vmax,
+                         valinit=vmin)
+
+    return fig
