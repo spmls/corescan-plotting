@@ -68,7 +68,7 @@ def ct_in(filename='',xml_fname=''):
     xml_dic = ct_xml(xml_fname)
     return im, xml_dic
 ###############################################################################
-def ct_crop_rotate(ct_data,ct_xml,thresh_val, plot=False):
+def auto_crop_rotate(ct_data,ct_xml,thresh_val, plot=False):
     """
     crop out "air" in a ct image, and rotate to 90 degrees vertical
     As of 4/22/2019, reading in image as 8 bit to perform thresholding,
