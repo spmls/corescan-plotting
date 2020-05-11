@@ -265,6 +265,60 @@ def ct_crop_rotate_multiple(ct_data,ct_xml,thresh_val,top_depths,plot=False):
         ax2.set_title('thresholded and contoured')
     return cropped_rotated_images, cropped_rotated_xml
 
+################################################################################
+def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
+    """
+    extract a subset of the input image using a bounding box defined by: 
+    [x0,x1,y0,y1] where x0,y0 are top left. x1,y1 are bottom right.
+    by default, coordinates are in centimeters, but can be defined in pixels if
+    units='pixels'.
+    """
+
+    if bbox == None:
+        print('need to define bbox, see help')
+        return
+    else:
+        x0,x1,y0,y1 = bbox[0],bbox[1],bbox[2],bbox[3]
+
+    # convert from cm to pixels and visa versa if necessary
+    cm2pix = ct_xml['pixels-per-CM']
+    if units == 'cm':
+        xp0,xp1 = x0*cm2pix,x1*cm2pix
+        yp0,yp1 = y0*cm2pix,y1*cm2pix
+    elif units == 'pixels':
+        xp0,xp1,yp0,yp1 = x0,x1,y0,y1
+        x0,x1 = xp0/cm2pix,xp1/cm2pix
+        y0,y1 = yp0/cm2pix,yp1/cm2pix
+
+    ## Extract
+    ct_crop = np.flipud(ct[yp0-1:yp1-1,xp0-1:xp1-1])
+
+    ## Plot original
+    if plot == True:
+        fig, (ax1,ax2) = plt.subplots(1,2)
+        ax1.imshow(ct_data, aspect='equal', extent=(0,ct_xml['physical-width'],\
+                            ct_xml['physical-top']/100+ct_xml['physical-height'],\
+                            ct_xml['physical-top']/100))
+        ax1.plot([x0,x0,x1,x1,x0],[y0,y1,y1,y0,y0],'ro-')
+        ax1.set_title('original')
+
+        ax2.imshow(ct_crop, aspect='equal',extent=(x0,x1,y0,y1))
+        ax2.set_ylim(y1,y0)
+        ax2.set_title('cropped')
+
+    ## Update xml so that new images scale correctly, list of dictionaries
+    xml = ct_xml.copy()
+    xml['physical-width'] = x1-x0
+    xml['physical-height'] = y1-y0
+    xml['pixel-width'] = ct_crop.shape[1]
+    xml['scan-lines'] = ct_crop.shape[0]
+    xml['physical-top'] = y0*100.
+    xml['coreID'] = ct_xml['coreID']+str(" %d-%d cm"
+                            %(xml['physical-top']/100,
+                            xml['physical-top']/100+xml['physical-height']))
+
+    return ct_crop,xml
+
 ###############################################################################
 def ct_plot(ct_data, ct_xml,vmin=0, vmax=50000):
     """
