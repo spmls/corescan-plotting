@@ -268,7 +268,7 @@ def ct_crop_rotate_multiple(ct_data,ct_xml,thresh_val,top_depths,plot=False):
 ################################################################################
 def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
     """
-    extract a subset of the input image using a bounding box defined by: 
+    extract a subset of the input image using a bounding box defined by:
     [x0,x1,y0,y1] where x0,y0 are top left. x1,y1 are bottom right.
     by default, coordinates are in centimeters, but can be defined in pixels if
     units='pixels'.
@@ -291,7 +291,7 @@ def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
         y0,y1 = yp0/cm2pix,yp1/cm2pix
 
     ## Extract
-    ct_crop = np.flipud(ct[yp0-1:yp1-1,xp0-1:xp1-1])
+    ct_crop = np.flipud(ct_data[yp0-1:yp1-1,xp0-1:xp1-1])
 
     ## Plot original
     if plot == True:
