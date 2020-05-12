@@ -14,7 +14,7 @@ import tkinter
 from tkinter import filedialog
 import numpy as np
 import xml.etree.ElementTree
-from skimage.external import tifffile
+import tifffile
 from skimage.transform import downscale_local_mean
 import matplotlib as matplotlib
 import matplotlib.pyplot as plt
@@ -31,7 +31,10 @@ def ct_xml(filename=''):
     """
     ## Get directory if not specified in function call
     if not filename:
+        tk_root = tkinter.Tk()
+        tk_root.wm_withdraw()
         filename = filedialog.askopenfilename()
+        tk_root.destroy()
         if not filename:
             sys.exit()
     fname = filename
@@ -56,7 +59,10 @@ def ct_in(filename='',xml_fname=''):
     """
     ## Get filename if not specified in function call
     if not filename:
+        tk_root = tkinter.Tk()
+        tk_root.wm_withdraw()
         filename = filedialog.askopenfilename()
+        tk_root.destroy()
         if not filename:
             sys.exit()
     im = tifffile.imread(filename)
