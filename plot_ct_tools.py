@@ -261,6 +261,7 @@ def ct_crop_rotate_multiple(ct_data,ct_xml,thresh_val,top_depths,plot=False):
         ax1=plt.subplot(121)
         ax1.imshow(ct_data,cmap = matplotlib.cm.gray)
         ax1.set_title('original image')
+        ax1.set_ylabel('pixels')
 
         ax2=plt.subplot(122)
         ax2.imshow(thresh,cmap=matplotlib.cm.gray)
@@ -471,30 +472,25 @@ def extract_profile(ct_data,ct_xml,transect=None):
     if transect is not specified, take a line down the center
     if transect is specified, should be of form: [x0,x1,y0,y1] (in cm)
     """
-    pix2cm = ct_xml['pixels-per-CM']
+    cm2pix = ct_xml['pixels-per-CM']
+    top = ct_xml['physical-top']/100
     if transect == None:
-        x0,y0 = ct_xml['pixel-width']/2, 0
-        x1,y1 = ct_xml['pixel-width']/2,ct_xml['scan-lines']
+        x0,y0 = ct_xml['pixel-width']/2, top
+        x1,y1 = ct_xml['pixel-width']/2,top+ct_xml['physical-height']
         length = ct_xml['scan-lines']
-        x = np.linspace(x0,x1,length)
-        y = np.linspace(y0,y1-1,length)
-        x0_cm = x0/pix2cm
-        x1_cm = x0_cm
-        y0_cm, y1_cm = y0/pix2cm, y1/pix2cm
     else:
-        x0_cm,y0_cm = transect[0],transect[2]
-        x1_cm,y1_cm = transect[1],transect[3]
-        x0,x1 = x0_cm*pix2cm, x1_cm*pix2cm
-        y0,y1 = y0_cm*pix2cm, y1_cm*pix2cm
+        x0,y0 = transect[0],transect[2]
+        x1,y1 = transect[1],transect[3]
         length = ct_xml['scan-lines']
-        x = np.linspace(x0,x1,length)
-        y = np.linspace(y0,y1-1,length)
 
+    xp0,xp1 = x0*cm2pix, x1*cm2pix
+    yp0,yp1 = np.abs(top-y0)*cm2pix, np.abs(top-y1)*cm2pix
+    x = np.linspace(xp0,xp1,length)
+    y = np.linspace(yp0,yp1,length)
     zi = ct_data[y.astype(np.int),x.astype(np.int)]
-    y_cm = y/ct_xml['pixels-per-CM']
-    profile_points = [x0_cm,x1_cm,y0_cm,y1_cm]
+    y_cm = top+y/cm2pix
 
-    return zi, y_cm, profile_points
+    return zi, y_cm,[x0,x1,y0,y1]
 
 
 ################################################################################
@@ -518,7 +514,7 @@ def lamina_fft_filter(signal,high_freq_thresh=0.03,plot=False):
     # Remove high frequencies
     high_freq_fft = sig_fft.copy()
     high_freq_fft[np.abs(sample_freq) > high_freq_thresh] = 0
-    filtered_sig = np.fft.ifft(high_freq_fft)
+    filtered_sig = np.fft.ifft(high_freq_fft).real
 
     if plot == True:
         fig = plt.figure(figsize=(11,8.5))
