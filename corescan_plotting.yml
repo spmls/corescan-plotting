@@ -13,5 +13,6 @@ dependencies:
   - scipy
   - tk
   - exifread
+  - tifffile
 
   
