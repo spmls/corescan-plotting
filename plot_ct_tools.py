@@ -289,12 +289,14 @@ def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
 
     # convert from cm to pixels and visa versa if necessary
     cm2pix = ct_xml['pixels-per-CM']
+    top = ct_xml['physical-top']/100.
     if units == 'cm':
-        xp0,xp1 = x0*cm2pix,x1*cm2pix
-        yp0,yp1 = y0*cm2pix,y1*cm2pix
+        xp0,xp1 = int(x0*cm2pix),int(x1*cm2pix)
+        yp0 = int(np.abs(top-y0)*cm2pix)
+        yp1 = int(np.abs(top-y1)*cm2pix)
     elif units == 'pixels':
         xp0,xp1,yp0,yp1 = x0,x1,y0,y1
-        x0,x1 = xp0/cm2pix,xp1/cm2pix
+        x0,x1 = topxp0/cm2pix,xp1/cm2pix
         y0,y1 = yp0/cm2pix,yp1/cm2pix
 
     ## Extract
@@ -475,8 +477,8 @@ def extract_profile(ct_data,ct_xml,transect=None):
     cm2pix = ct_xml['pixels-per-CM']
     top = ct_xml['physical-top']/100
     if transect == None:
-        x0,y0 = ct_xml['pixel-width']/2, top
-        x1,y1 = ct_xml['pixel-width']/2,top+ct_xml['physical-height']
+        x0,y0 = ct_xml['physical-width']/2, top
+        x1,y1 = ct_xml['physical-width']/2,top+ct_xml['physical-height']
         length = ct_xml['scan-lines']
     else:
         x0,y0 = transect[0],transect[2]
@@ -487,7 +489,7 @@ def extract_profile(ct_data,ct_xml,transect=None):
     yp0,yp1 = np.abs(top-y0)*cm2pix, np.abs(top-y1)*cm2pix
     x = np.linspace(xp0,xp1,length)
     y = np.linspace(yp0,yp1,length)
-    zi = ct_data[y.astype(np.int),x.astype(np.int)]
+    zi = ct_data[y.astype(np.int)-1,x.astype(np.int)-1]
     y_cm = top+y/cm2pix
 
     return zi, y_cm,[x0,x1,y0,y1]
@@ -547,7 +549,7 @@ def lamina_peaks(signal,prominence=500,width=5):
     return peaks, valleys
 
 ################################################################################
-def count_laminae(ct_data,ct_xml,layout='horizontal',transect=None):
+def autocount_laminae_fft(ct_data,ct_xml,layout='horizontal',transect=None):
     """
     automate counting of laminae
     if transect is not specified, it will extract a line from the center of the
@@ -574,14 +576,18 @@ def count_laminae(ct_data,ct_xml,layout='horizontal',transect=None):
         fig,(ax1,ax) = plt.subplots(ncols=2,
             figsize=(screen_width*0.8,screen_height/image_h2w*10),
             sharey=True)
-    ## Calculate vmin and vmax automatically
-    vmin0 = np.min(ct_data)
-    vmax0 = np.max(ct_data)
+
 
     ## Extract transect
     zi, y_cm, profile_points = extract_profile(ct_data,ct_xml,transect=transect)
     x0_cm,x1_cm = profile_points[0],profile_points[1]
     y0_cm,y1_cm = profile_points[2],profile_points[3]
+
+    ## Calculate vmin and vmax based on the transect values
+    vmin0 = np.min(zi)
+    vmax0 = np.max(zi)
+    vmin = np.min(ct_data)
+    vmax = np.max(ct_data)
 
     # filter out high frequencies with fourier transform
     freq_thresh=0.03
@@ -642,9 +648,9 @@ def count_laminae(ct_data,ct_xml,layout='horizontal',transect=None):
     ax_max = plt.axes([0.25, 0.21, 0.65, 0.01])
     ax_min = plt.axes([0.25, 0.16, 0.65, 0.01])
 
-    smin = Slider(ax_min,'min intensity',vmin0,vmax0,valinit=vmin0,
+    smin = Slider(ax_min,'min intensity',vmin,vmax,valinit=vmin0,
                   dragging=True,valfmt='%i')
-    smax = Slider(ax_max,'max intensity',vmin0,vmax0,valinit=vmax0,
+    smax = Slider(ax_max,'max intensity',vmin,vmax,valinit=vmax0,
                   dragging=True,valfmt='%i')
 
     ## Fourier slider
@@ -694,3 +700,145 @@ def count_laminae(ct_data,ct_xml,layout='horizontal',transect=None):
                         horizOn=False, vertOn=True)
 
     return fig,multi,sliders
+
+################################################################################
+def pick_laminae(ct_data,ct_xml,layout='horizontal'):
+    """
+    interactive plot. If you click on a plot, it will write the depth at that
+    pixel to a list.
+    """
+    ## Load the ct image file and xml data
+    im = ct_data
+    ct_xml = ct_xml
+
+    ## Get screen size for figure
+    root = tkinter.Tk()
+    pix2in = root.winfo_fpixels('1i')
+    screen_width = root.winfo_screenwidth()/pix2in
+    screen_height = root.winfo_screenheight()/pix2in
+    image_h2w = round(ct_xml['physical-height']/ct_xml['physical-width'])
+    pix2cm = ct_xml['pixels-per-CM']
+    if layout == 'horizontal':
+        fig,(ax1,ax) = plt.subplots(nrows=2,
+            figsize=(screen_width*0.8,screen_height*0.8),
+            sharex=True)
+        plt.subplots_adjust(bottom=0.25)
+    else:
+        fig,(ax1,ax) = plt.subplots(ncols=2,
+            figsize=(screen_width*0.8,screen_height/image_h2w*10),
+            sharey=True)
+
+    ## Extract transect
+    zi, y_cm, profile_points = extract_profile(ct_data,ct_xml)
+    x0_cm,x1_cm = profile_points[0],profile_points[1]
+    y0_cm,y1_cm = profile_points[2],profile_points[3]
+
+    ## Calculate vmin and vmax based on the transect values
+    vmin0 = np.min(zi)
+    vmax0 = np.max(zi)
+    vmin = np.min(ct_data)
+    vmax = np.max(ct_data)
+
+    ## Plot images
+    aspect = 'equal'
+    if layout == 'horizontal':
+        ct_plot = ax.imshow(np.rot90(im,k=1,axes=(1,0)), aspect=aspect,
+                             extent=(ct_xml['physical-top']/100+\
+                                     ct_xml['physical-height'],
+                                     ct_xml['physical-top']/100,
+                                     0,
+                                     ct_xml['physical-width']),
+                            vmin=vmin0,vmax=vmax0)
+        transect = ax.plot([y0_cm,y1_cm],[x0_cm,x1_cm],'ro-')
+        ax.set_xlim(y0_cm,y1_cm)
+        ax.set_ylabel('Width [cm]')
+        ax.set_xlabel('Depth [cm]')
+    else:
+        ct_plot = ax.imshow(im, aspect=aspect,
+                             extent=(0,ct_xml['physical-width'],\
+                             ct_xml['physical-top']/100+ct_xml['physical-height'],\
+                             ct_xml['physical-top']/100),
+                             vmin=vmin0,vmax=vmax0)
+        transect = ax.plot([x0_cm,x1_cm],[y0_cm,y1_cm],'ro-')
+        ax.set_ylim(y1_cm,y0_cm)
+        ax.set_xlabel('Width [cm]')
+
+    ax.set_title(ct_xml['coreID'])
+
+    contact_depths = []
+    def onclick(event):
+        x,y = event.xdata, event.ydata
+        if layout == 'horizontal':
+            if event.inaxes == ax:
+                ax.plot(x,y,'rx')
+                contact_depths.append(x)
+                ax.vlines(x,ymin=0,ymax=ct_xml['physical-width'],ls='--',lw=0.5)
+                ax1.vlines(x,ymin=vmin0,ymax=vmax0,ls='--',lw=0.5)
+            if event.inaxes == ax1:
+                ax1.plot(x,y,'rx')
+                contact_depths.append(x)
+                ax.vlines(x,ymin=0,ymax=ct_xml['physical-width'],ls='--',lw=0.5)
+                ax1.vlines(x,ymin=vmin0,ymax=vmax0,ls='--',lw=0.5)
+        fig.canvas.draw()
+    pick = fig.canvas.mpl_connect('button_press_event', onclick)
+
+    ## Plot transect values
+    if layout == 'horizontal':
+        ax1.plot(y_cm,zi,'k-',linewidth=1.0)
+        ax1.set_xlabel('Depth [cm]')
+        ax1.set_ylabel('Intensity')
+        ax1.set_xlim(y0_cm,y1_cm)
+        ax1.tick_params(labelbottom=True)
+    else:
+        ax1.plot(zi,y_cm,'k-',linewidth=1.0)
+        ax1.set_ylabel('Depth [cm]')
+        ax1.set_xlabel('Intensity')
+        ax1.set_ylim(y1_cm,y0_cm)
+
+    ## Vmin and vmax slider
+    ax_max = plt.axes([0.25, 0.21, 0.65, 0.01])
+    ax_min = plt.axes([0.25, 0.16, 0.65, 0.01])
+
+    smin = Slider(ax_min,'min intensity',vmin,vmax,valinit=vmin0,
+                  dragging=True,valfmt='%i')
+    smax = Slider(ax_max,'max intensity',vmin,vmax,valinit=vmax0,
+                  dragging=True,valfmt='%i')
+
+
+    def update(val):
+        ## update contrast sliders
+        vmin0,vmax0 = smin.val, smax.val
+        ct_plot.set_clim(vmin=vmin0,vmax=vmax0)
+        ax1.set_ylim(vmin0,vmax0)
+        fig.canvas.draw_idle()
+
+    smin.on_changed(update)
+    smax.on_changed(update)
+
+    sliders = [smin,smax]
+
+    # # ## Horizontal line across both plots (multicursor)
+    multi = MultiCursor(fig.canvas, (ax,ax1), color='r', lw=0.5,
+                        horizOn=False, vertOn=True)
+
+    return fig,multi,sliders,contact_depths
+
+################################################################################
+def picks_to_excel(contact_depths,filename=''):
+    """
+    save list of picked depths to a csv file
+    """
+    depths = sorted(contact_depths) # sort the depths
+    depths = np.array(depths)
+
+    if not filename:
+        root = tkinter.Tk()
+        root.wm_withdraw()
+        filename = filedialog.asksaveasfilename()
+        root.destroy()
+        if not filename:
+            sys.exit()
+    fname = filename
+
+    np.savetxt(fname,depths.T,delimiter=',',fmt = '%f')
+    print('Saved picks as %s' % fname)

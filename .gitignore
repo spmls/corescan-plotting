@@ -6,4 +6,5 @@ __pycache__/
 .DS_Store
 testing.py
 test.py
+test.csv
 #
