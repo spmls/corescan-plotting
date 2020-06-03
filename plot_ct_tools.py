@@ -19,6 +19,7 @@ from skimage.transform import downscale_local_mean
 import matplotlib as matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, MultiCursor
+from matplotlib.ticker import MultipleLocator
 import scipy
 import exifread
 import cv2
@@ -353,6 +354,8 @@ def ct_plot(ct_data, ct_xml,vmin=0, vmax=50000):
                         ct_xml['physical-top']/100),
                         vmin=vmin,vmax=vmax)
     ax.set_title(ct_xml['coreID'])
+    ax.yaxis.set_major_locator(MultipleLocator(10))
+    ax.yaxis.set_minor_locator(MultipleLocator(1))
 
     return fig
 
