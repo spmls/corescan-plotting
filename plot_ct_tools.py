@@ -323,9 +323,12 @@ def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
     xml['pixel-width'] = ct_crop.shape[1]
     xml['scan-lines'] = ct_crop.shape[0]
     xml['physical-top'] = y0*100.
-    xml['coreID'] = ct_xml['coreID']+str(" %d-%d cm"
-                            %(xml['physical-top']/100,
-                            xml['physical-top']/100+xml['physical-height']))
+    base_core_id = str.split(xml['coreID'],'-')[0:2]
+    xml['coreID'] = str("%s-%s %d-%d cm"
+                            %(base_core_id[0],
+                              base_core_id[1],
+                              xml['physical-top']/100,
+                              xml['physical-top']/100+xml['physical-height']))
 
     return ct_crop,xml
 
@@ -354,6 +357,8 @@ def ct_plot(ct_data, ct_xml,vmin=0, vmax=50000):
                         ct_xml['physical-top']/100),
                         vmin=vmin,vmax=vmax)
     ax.set_title(ct_xml['coreID'])
+    ax.xaxis.set_major_locator(MultipleLocator(5))
+    ax.xaxis.set_minor_locator(MultipleLocator(1))
     ax.yaxis.set_major_locator(MultipleLocator(10))
     ax.yaxis.set_minor_locator(MultipleLocator(1))
 
