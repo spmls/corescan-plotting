@@ -92,8 +92,8 @@ def auto_crop_rotate(ct_data,ct_xml,thresh_val, plot=False):
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
     # Find contours of threshold image
-    contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
-                                            cv2.CHAIN_APPROX_SIMPLE)
+    contours = cv2.findContours(thresh,mode=cv2.RETR_TREE,
+                                            method=cv2.CHAIN_APPROX_SIMPLE)
     # Find the index of the largest contour
     areas = [cv2.contourArea(c) for c in contours]
     max_index = np.argmax(areas)
@@ -180,7 +180,7 @@ def ct_crop_rotate_multiple(ct_data,ct_xml,thresh_val,top_depths,plot=False):
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
     # Find contours of threshold image
-    contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
+    contours = cv2.findContours(thresh,cv2.RETR_TREE,
                                             cv2.CHAIN_APPROX_SIMPLE)
 
     # Sort contours from top to bottom
