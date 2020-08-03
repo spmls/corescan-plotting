@@ -301,7 +301,7 @@ def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
         y0,y1 = top+yp0/cm2pix,top+yp1/cm2pix
 
     ## Extract
-    ct_crop = np.flipud(ct_data[yp0-1:yp1-1,xp0-1:xp1-1])
+    ct_crop = ct_data[yp0-1:yp1-1,xp0-1:xp1-1]
 
     ## Plot original
     if plot == True:
