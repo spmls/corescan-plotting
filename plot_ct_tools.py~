@@ -54,38 +54,6 @@ def ct_xml(filename=''):
     return dic
 
 ###############################################################################
-def ct_xml_write(new_filename='',orig_filename=''):
-    """
-    write to GeoTek RXCT xml
-    """
-    ## Get directory if not specified in function call
-    if not orig_filename:
-        tk_root = tkinter.Tk()
-        tk_root.wm_withdraw()
-        filename = filedialog.askopenfilename()
-        tk_root.destroy()
-        if not filename:
-            sys.exit()
-    orig_fname = orig_filename
-    if not new_filename:
-        new_fname = orig_filename
-    else:
-        new_fname = new_filename
-    ## Parse the xml file
-    tree = xml.etree.ElementTree.parse(orig_fname)
-    root = tree.getroot()
-    ## Add element tags and attributes to a dictionary
-    dic = {}
-    for elem in root.iter():
-        if isinteger(elem.text):
-            dic[elem.tag] = int(elem.text)
-        elif isfloat(elem.text):
-            dic[elem.tag] = float(elem.text)
-        else:
-            dic[elem.tag] = elem.text
-    return dic
-
-###############################################################################
 def ct_in(filename='',xml_fname=''):
     """
     read in RXCT data from reconstructed orthogonal views (tiffs)
@@ -124,7 +92,7 @@ def auto_crop_rotate(ct_data,ct_xml,thresh_val, plot=False):
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
     # Find contours of threshold image
-    image,contours,hierarchy = cv2.findContours(thresh,mode=cv2.RETR_TREE,
+    contours = cv2.findContours(thresh,mode=cv2.RETR_TREE,
                                             method=cv2.CHAIN_APPROX_SIMPLE)
     # Find the index of the largest contour
     areas = [cv2.contourArea(c) for c in contours]
@@ -212,7 +180,7 @@ def ct_crop_rotate_multiple(ct_data,ct_xml,thresh_val,top_depths,plot=False):
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
     # Find contours of threshold image
-    image,contours,hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,
+    contours = cv2.findContours(thresh,cv2.RETR_TREE,
                                             cv2.CHAIN_APPROX_SIMPLE)
 
     # Sort contours from top to bottom
@@ -333,7 +301,7 @@ def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
         y0,y1 = top+yp0/cm2pix,top+yp1/cm2pix
 
     ## Extract
-    ct_crop = ct_data[yp0-1:yp1-1,xp0-1:xp1-1]
+    ct_crop = np.flipud(ct_data[yp0-1:yp1-1,xp0-1:xp1-1])
 
     ## Plot original
     if plot == True:
@@ -344,7 +312,7 @@ def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
         ax1.plot([x0,x0,x1,x1,x0],[y0,y1,y1,y0,y0],'ro-')
         ax1.set_title('original')
 
-        ax2.imshow(ct_crop, aspect='equal',extent=(x0,x1,y1,y0))
+        ax2.imshow(ct_crop, aspect='equal',extent=(x0,x1,y0,y1))
         ax2.set_ylim(y1,y0)
         ax2.set_title('cropped')
 
@@ -355,10 +323,13 @@ def crop_custom(ct_data,ct_xml,units='cm',bbox=None,plot=False):
     xml['pixel-width'] = ct_crop.shape[1]
     xml['scan-lines'] = ct_crop.shape[0]
     xml['physical-top'] = y0*100.
-    xml['coreID'] = str("%s %d-%d cm"
-                            %(xml['coreID'],
+    base_core_id = str.split(xml['coreID'],'-')[0:2]
+    xml['coreID'] = str("%s-%s %d-%d cm"
+                            %(base_core_id[0],
+                              base_core_id[1],
                               xml['physical-top']/100,
                               xml['physical-top']/100+xml['physical-height']))
+
     return ct_crop,xml
 
 ###############################################################################
@@ -879,18 +850,3 @@ def picks_to_excel(contact_depths,filename=''):
 
     np.savetxt(fname,depths.T,delimiter=',',fmt = '%f')
     print('Saved picks as %s' % fname)
-
-################################################################################
-def extract_average_ortho(ct, ct_xml, window_width = 1):
-    '''extract downcore ct intensity from the center of the core of orthogonal view.
-        will average across the specified distance (centered on core midpoint).
-        best to perform this on a cropped core image to avoid blank space.
-    '''
-    cm2pix = ct_xml['pixels-per-CM']
-    width = ct_xml['physical-width']
-    midpoint = width/2
-    left = midpoint - window_width/2
-    right = midpoint + window_width/2
-    left_pix,right_pix = round(cm2pix*left), round(cm2pix*right)
-    avg = [np.average(ct[i,left_pix:right_pix]) for i in range(np.shape(ct)[0])]
-    return avg

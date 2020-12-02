@@ -16,16 +16,17 @@ import csv
 import pandas
 import matplotlib as matplotlib
 import matplotlib.pyplot as plt
+import colour
 from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator)
 matplotlib.rcParams['pdf.fonttype'] = 42
 import warnings
-from corescan_plotting import plot_ct_tools, plot_linescan_tools
+from corescan_plotting import plot_ct_tools, plot_linescan_tools, plot_xrf_tools
 
 ###############################################################################
-def xrf_in(filename=''):
+def strat_in(filename=''):
     """
-    read in Geotek MSCL (v7.9) XRF data from from .out file
+    read in excel file with core description
     """
     ## Get filename if not specified in function call
     if not filename:
