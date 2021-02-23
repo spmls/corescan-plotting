@@ -200,3 +200,59 @@ def bands_to_rgb(rgb_array):
     g = normalize(rgb_array[:,:,1])
     b = normalize(rgb_array[:,:,2])
     return np.dstack((r,g,b))
+
+################################################################################
+def crop_custom(ls_data,ls_xml,units='cm',bbox=None,plot=False):
+    """
+    extract a subset of the input image using a bounding box defined by:
+    [x0,x1,y0,y1] where x0,y0 are top left. x1,y1 are bottom right.
+    by default, coordinates are in centimeters, but can be defined in pixels if
+    units='pixels'.
+    """
+
+    if bbox == None:
+        print('need to define bbox, see help')
+        return
+    else:
+        x0,x1,y0,y1 = bbox[0],bbox[1],bbox[2],bbox[3]
+
+    # convert from cm to pixels and visa versa if necessary
+    cm2pix = ls_xml['pixels-per-CM']
+    top = ls_xml['physical-top']
+    if units == 'cm':
+        xp0,xp1 = int(x0*cm2pix),int(x1*cm2pix)
+        yp0 = int(np.abs(top-y0)*cm2pix)
+        yp1 = int(np.abs(top-y1)*cm2pix)
+    elif units == 'pixels':
+        xp0,xp1,yp0,yp1 = x0,x1,y0,y1
+        x0,x1 = xp0/cm2pix,xp1/cm2pix
+        y0,y1 = top+yp0/cm2pix,top+yp1/cm2pix
+
+    ## Extract
+    ls_crop = ls_data[yp0-1:yp1-1,xp0-1:xp1-1]
+
+    ## Plot original
+    if plot == True:
+        fig, (ax1,ax2) = plt.subplots(1,2)
+        ax1.imshow(ct_data, aspect='equal', extent=(0,ls_xml['physical-width'],\
+                            ls_xml['physical-top']+ls_xml['physical-height'],\
+                            ls_xml['physical-top']))
+        ax1.plot([x0,x0,x1,x1,x0],[y0,y1,y1,y0,y0],'ro-')
+        ax1.set_title('original')
+
+        ax2.imshow(ls_crop, aspect='equal',extent=(x0,x1,y1,y0))
+        ax2.set_ylim(y1,y0)
+        ax2.set_title('cropped')
+
+    ## Update xml so that new images scale correctly, list of dictionaries
+    xml = ls_xml.copy()
+    xml['physical-width'] = x1-x0
+    xml['physical-height'] = y1-y0
+    xml['pixel-width'] = ls_crop.shape[1]
+    xml['scan-lines'] = ls_crop.shape[0]
+    xml['physical-top'] = y0
+    xml['coreID'] = str("%s %d-%d cm"
+                            %(xml['coreID'],
+                              xml['physical-top'],
+                              xml['physical-top']+xml['physical-height']))
+    return ls_crop,xml
