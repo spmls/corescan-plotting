@@ -23,7 +23,7 @@ import warnings
 from corescan_plotting import plot_ct_tools, plot_linescan_tools
 
 ###############################################################################
-def xrf_in(filename=''):
+def xrf_in(filename='',mode='geochem'):
     """
     read in Geotek MSCL (v7.9) XRF data from from .out file
     """
@@ -33,7 +33,7 @@ def xrf_in(filename=''):
         if not filename:
             sys.exit()
     header, data = csv_xrf_parser(filename)
-    dict = xrf_array2dict(header, data)
+    dict = xrf_array2dict(header, data, mode)
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     ## Read other files
@@ -67,7 +67,7 @@ def csv_xrf_parser(filename):
     return header, data
 
 ###############################################################################
-def xrf_array2dict(header,data):
+def xrf_array2dict(header,data,mode='geochem'):
     """
     passes an array of Geotek XRF data (MSCL v7.9) to a dictionary of values
     for each element
@@ -83,10 +83,15 @@ def xrf_array2dict(header,data):
     dict["error"] = data[:,6::2] # array of errors in measurement
     for i,e in enumerate(dict["elements"]): # create key-value pair for elements
         dict[e] = dict["comp"][:,i]
-    #Process dictionary
-    dict = remove_open(dict)
-    dict['comp'] = removeinvalid(dict['comp'],tol=500)
+    #Set ppm tolerance depending on soil vs geochem mode
+    if 'geochem' in mode':
+        tol = 500
+        dict = remove_open(dict)
+    elif 'soil' in mode:
+        tol = 50.
+    dict['comp'] = removeinvalid(dict['comp'],tol=tol)
     dict['clr'] = clr(dict['comp'])
+    dict['mode'] = mode
 
     return dict
 
