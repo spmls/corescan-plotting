@@ -84,7 +84,7 @@ def xrf_array2dict(header,data,mode='geochem'):
     for i,e in enumerate(dict["elements"]): # create key-value pair for elements
         dict[e] = dict["comp"][:,i]
     #Set ppm tolerance depending on soil vs geochem mode
-    if 'geochem' in mode':
+    if 'geochem' in mode:
         tol = 500
         dict = remove_open(dict)
     elif 'soil' in mode:
