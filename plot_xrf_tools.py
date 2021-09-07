@@ -90,7 +90,8 @@ def xrf_array2dict(header,data,mode='geochem'):
     elif 'soil' in mode:
         tol = 50.
     dict['comp'] = removeinvalid(dict['comp'],tol=tol)
-    dict['clr'] = clr(dict['comp'])
+    if 'geochem' in mode:
+        dict['clr'] = clr(dict['comp'])
     dict['mode'] = mode
 
     return dict
@@ -115,14 +116,11 @@ def remove_open(dict,k=1000000):
     return dict
 
 ###############################################################################
-def removeinvalid(array, mode='geochem',tol=500.):
+def removeinvalid(array,tol=500.):
     """
     remove all XRF measurements whose concentrations are less than 'tol'.
     geotek recommends 500+ ppm in geochem mode, 50+ ppm in soil mode.
     """
-    if not tol:
-        if 'soil' in mode:
-            tol = 50.
     array[array < tol] = np.nan
     return array
 
@@ -228,7 +226,7 @@ def plot_xrf(dict, elements, smooth=5, clr=False):
     norm = matplotlib.colors.Normalize(vmin=0,vmax = np.size(elements))
     nplots = np.size(elements)
     fig = plt.figure(figsize=(screen_width*nplots/12,screen_height))
-    keep_nans=True # for npointssmooth
+    keep_nans=False # for npointssmooth
     LinearLocator = matplotlib.ticker.LinearLocator
 
     for i,e in enumerate(elements):
@@ -374,7 +372,7 @@ def plot_ct_ls_xrf(ct_image, ct_xml,
         else:
             if clr:
                 clr_vector = dict['clr'][:,dict['elements'].index(e)]
-                p = ax[i].plot(clr_vector,depth,color = colormap(norm(i)))
+                p = ax.plot(clr_vector,depth,color = colormap(norm(i)))
             else:
                 ppm_vector = dict[e]
                 p = ax.plot(ppm_vector,depth,color = colormap(norm(i)))

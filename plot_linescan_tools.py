@@ -102,7 +102,9 @@ def linescan_plot(ls_data, ls_xml):
                         ls_xml['physical-top']+ls_xml['physical-height'],\
                         ls_xml['physical-top']))
     ax.set_title(ls_xml['coreID'])
-
+    ax.yaxis.set_major_locator(MultipleLocator(10))
+    ax.yaxis.set_minor_locator(MultipleLocator(1))
+    ax.xaxis.set_major_locator(MultipleLocator(1))
     return fig
 
 ###############################################################################
@@ -234,7 +236,7 @@ def crop_custom(ls_data,ls_xml,units='cm',bbox=None,plot=False):
     ## Plot original
     if plot == True:
         fig, (ax1,ax2) = plt.subplots(1,2)
-        ax1.imshow(ct_data, aspect='equal', extent=(0,ls_xml['physical-width'],\
+        ax1.imshow(ls_data, aspect='equal', extent=(0,ls_xml['physical-width'],\
                             ls_xml['physical-top']+ls_xml['physical-height'],\
                             ls_xml['physical-top']))
         ax1.plot([x0,x0,x1,x1,x0],[y0,y1,y1,y0,y0],'ro-')
