@@ -16,3 +16,14 @@ Once created, activate the environment and install corescan_plotting with:
 
 opencv is a tricky dependency to install, you may have to reinstall it with: `pip install opencv-python==4.2.0.32` if 
 corescan_plotting fails to import in python.
+
+Usage
+-----
+See examples.ipynb
+
+`from corescan_plotting import ct
+import matplotlib.pyplot as plt
+
+im, xml = ct.ct_in() # this will open up a window to load in a Geotek orthogonal view image and associated xml file
+ct.ct_plot(im, xml) # this will plot the loaded ct file
+plt.show()`
