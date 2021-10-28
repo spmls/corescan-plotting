@@ -21,7 +21,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator)
 matplotlib.rcParams['pdf.fonttype'] = 42
 import warnings
-from corescan_plotting import plot_ct_tools, plot_linescan_tools, plot_xrf_tools
+from corescan_plotting import ct, linescan, xrf
 
 ###############################################################################
 def strat_in(filename=''):
