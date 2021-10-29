@@ -19,7 +19,7 @@ corescan_plotting fails to import in python.
 
 Usage
 -----
-See examples.ipynb
+See [examples.ipynb](https://code.usgs.gov/slaselle/corescan_plotting/-/blob/master/examples.ipynb) for more detailed examples.
 
 ```
 from corescan_plotting import ct
