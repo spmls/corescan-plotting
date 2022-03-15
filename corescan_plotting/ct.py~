@@ -40,17 +40,18 @@ def ct_xml(filename=''):
             sys.exit()
     fname = filename
     # Parse the xml file
-    tree = xml.etree.ElementTree.parse(fname)
-    root = tree.getroot()
-    # Add element tags and attributes to a dictionary
-    dic = {}
-    for elem in root.iter():
-        if isinteger(elem.text):
-            dic[elem.tag] = int(elem.text)
-        elif isfloat(elem.text):
-            dic[elem.tag] = float(elem.text)
-        else:
-            dic[elem.tag] = elem.text
+
+        tree = xml.etree.ElementTree.parse(xml_file)
+        root = tree.getroot()
+        # Add element tags and attributes to a dictionary
+        dic = {}
+        for elem in root.iter():
+            if isinteger(elem.text):
+                dic[elem.tag] = int(elem.text)
+            elif isfloat(elem.text):
+                dic[elem.tag] = float(elem.text)
+            else:
+                dic[elem.tag] = elem.text
     return dic
 
 ###############################################################################
