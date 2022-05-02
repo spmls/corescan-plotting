@@ -13,6 +13,7 @@ Create a conda environment (see: [conda.io](https://conda.io/projects/conda/en/l
 
 Once created, activate the environment and install corescan_plotting with:
 `conda install -c spmls corescan_plotting`
+This installs the latest stable version.
 
 opencv is a tricky dependency to install, you may have to reinstall it with: `pip install opencv-python==4.2.0.32` if 
 corescan_plotting fails to import in python.
