@@ -57,7 +57,12 @@ def csv_xrf_parser(filename):
             if(i>=9):
                 break
         for row in readcsv: # From here, csv should be data
-            data.append([float(i) for i in row])
+            for i, val in enumerate(row):
+                if val == '':
+                    row[i] = np.nan
+                else:
+                    row[i] = float(row[i])
+            data.append(row)
     for i,r in enumerate(data): # Need to pad rows with empty data
         if len(r) != len(max(data,key=len)):
             r = np.append(r,np.ones((len(max(data,key=len))-len(r))))
