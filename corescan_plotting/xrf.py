@@ -23,9 +23,11 @@ import warnings
 from corescan_plotting import ct, linescan
 
 ###############################################################################
-def xrf_in(filename='',mode='geochem'):
+def xrf_in(filename='',mode='geochem', tol=''):
     """
-    read in Geotek MSCL (v7.9) XRF data from from .out file
+    read in Geotek MSCL (v7.9) XRF data from from .out file. Need to switch mode
+    to 'soil', default is 'geochem'. tol (tolerance for low ppms) defaults to 
+    500 in geochem mode, 50 in soil mode. Can set tol manually.
     """
     ## Get filename if not specified in function call
     if not filename:
@@ -33,7 +35,7 @@ def xrf_in(filename='',mode='geochem'):
         if not filename:
             sys.exit()
     header, data = csv_xrf_parser(filename)
-    dict = xrf_array2dict(header, data, mode)
+    dict = xrf_array2dict(header, data, mode, tol)
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     ## Read other files
@@ -72,7 +74,7 @@ def csv_xrf_parser(filename):
     return header, data
 
 ###############################################################################
-def xrf_array2dict(header,data,mode='geochem'):
+def xrf_array2dict(header,data,mode='geochem', tol=''):
     """
     passes an array of Geotek XRF data (MSCL v7.9) to a dictionary of values
     for each element
@@ -90,10 +92,12 @@ def xrf_array2dict(header,data,mode='geochem'):
         dict[e] = dict["comp"][:,i]
     #Set ppm tolerance depending on soil vs geochem mode
     if 'geochem' in mode:
-        tol = 500
+        if not tol:
+            tol = 500
         dict = remove_open(dict)
     elif 'soil' in mode:
-        tol = 50.
+        if not tol:
+            tol = 50.
     dict['comp'] = removeinvalid(dict['comp'],tol=tol)
     if 'geochem' in mode:
         dict['clr'] = clr(dict['comp'])
@@ -121,7 +125,7 @@ def remove_open(dict,k=1000000):
     return dict
 
 ###############################################################################
-def removeinvalid(array,tol=500.):
+def removeinvalid(array, tol=500.):
     """
     remove all XRF measurements whose concentrations are less than 'tol'.
     geotek recommends 500+ ppm in geochem mode, 50+ ppm in soil mode.
