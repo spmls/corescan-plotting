@@ -14,7 +14,6 @@ import tkinter
 from tkinter import filedialog
 import numpy as np
 import xml.etree.ElementTree
-import tifffile
 from skimage.transform import downscale_local_mean
 import matplotlib as matplotlib
 import matplotlib.pyplot as plt
@@ -102,7 +101,7 @@ def ct_in(filename='', xml_fname=''):
         tk_root.destroy()
         if not filename:
             sys.exit()
-    im = tifffile.imread(filename)
+    im = cv2.imread(filename)
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     # Read xml file

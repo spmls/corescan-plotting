@@ -1,0 +1,34 @@
+package:
+  name: "corescan_plotting"
+  version: "0.9.0"
+
+source:
+  git_url: https://code.usgs.gov/slaselle/corescan_plotting
+
+requirements:
+  host:
+    - python
+    - setuptools
+  build:
+    - python
+  run:
+    - python
+    - pandas
+    - matplotlib
+    - colour
+    - scikit-image
+    - numpy
+    - scipy
+    - tifffile
+    - opencv 
+
+about:
+  home: https://code.usgs.gov/slaselle/corescan_plotting
+  license: MIT
+  license_familY: MIT
+  license_file: LICENSE
+  summary: "Tools for analyzing and plotting outputs from various core scanning instruments"
+
+extra:
+  recipe-maintainers:
+    - spmls

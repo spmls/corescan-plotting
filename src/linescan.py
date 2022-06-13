@@ -13,7 +13,6 @@ import tkinter
 from tkinter import filedialog
 import numpy as np
 import xml.etree.ElementTree
-import tifffile
 from skimage.transform import downscale_local_mean
 from skimage import img_as_ubyte
 import matplotlib as matplotlib
@@ -68,7 +67,7 @@ def linescan_in(filename='',xml_fname=''):
         tk_root.destroy()
         if not filename:
             sys.exit()
-    im = tifffile.imread(filename)
+    im = cv2.imread(filename)
     if np.size(np.shape(im)) > 2: # normalize rgb bands to 0.0 to 1.0
         im = bands_to_rgb(im)
     # Determine the directory of the file
