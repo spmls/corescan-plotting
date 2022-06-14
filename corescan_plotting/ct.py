@@ -120,11 +120,9 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     Need to apply a threshold value (check plot to make sure whole core is
     being selected and only background is masked out)
     """
-    image_16bit = ct_data.astype('uint16')
-    image_8bit = (image_16bit/256).astype('uint8')
-    image_32bit = ct_data.astype('uint32')
+
     # blur to reduce noise
-    blur = cv2.GaussianBlur(image_8bit, (3, 3), 0)
+    blur = cv2.GaussianBlurct_data, (3, 3), 0)
     # Find edges of core using thresholding
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
@@ -161,7 +159,7 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     size = (int(scale*(x2-x1)), int(scale*(y2-y1)))
 
     M = cv2.getRotationMatrix2D((size[0]/2, size[1]/2), angle, 1.0)
-    cropped = cv2.getRectSubPix(np.float32(image_32bit), size, center)  # converted to 32 bit
+    cropped = cv2.getRectSubPix(ct_image, size, center) 
     cropped = cv2.warpAffine(cropped, M, size)
 
     croppedW = W if not rotated else H
