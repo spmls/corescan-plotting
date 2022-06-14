@@ -21,6 +21,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
                                AutoMinorLocator)
 import warnings
 from corescan_plotting import ct
+import cv2
 
 
 ###############################################################################

@@ -159,7 +159,7 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     size = (int(scale*(x2-x1)), int(scale*(y2-y1)))
 
     M = cv2.getRotationMatrix2D((size[0]/2, size[1]/2), angle, 1.0)
-    cropped = cv2.getRectSubPix(ct_image, size, center) 
+    cropped = cv2.getRectSubPix(ct_data, size, center) 
     cropped = cv2.warpAffine(cropped, M, size)
 
     croppedW = W if not rotated else H
