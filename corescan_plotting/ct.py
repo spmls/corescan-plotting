@@ -101,7 +101,7 @@ def ct_in(filename='', xml_fname=''):
         tk_root.destroy()
         if not filename:
             sys.exit()
-    im = cv2.imread(filename)
+    im = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     # Read xml file
