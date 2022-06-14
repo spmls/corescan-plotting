@@ -122,7 +122,7 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     """
 
     # blur to reduce noise
-    blur = cv2.GaussianBlurct_data, (3, 3), 0)
+    blur = cv2.GaussianBlur(ct_data, (3, 3), 0)
     # Find edges of core using thresholding
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
