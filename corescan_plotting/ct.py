@@ -121,8 +121,9 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     being selected and only background is masked out)
     """
 
+    ct_data_8bit = ct_data.astype('uint8') # contouring only works with 8 bit images
     # blur to reduce noise
-    blur = cv2.GaussianBlur(ct_data, (3, 3), 0)
+    blur = cv2.GaussianBlur(ct_data_8bit, (3, 3), 0)
     # Find edges of core using thresholding
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
