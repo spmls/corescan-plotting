@@ -122,7 +122,6 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     """
 
     ct_data_8bit = ct_data.astype('uint8') # contouring only works with 8 bit images
-    ct_data_32bit = ct_data.astype('uint32')
     # blur to reduce noise
     blur = cv2.GaussianBlur(ct_data_8bit, (3, 3), 0)
     # Find edges of core using thresholding
@@ -161,7 +160,7 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     size = (int(scale*(x2-x1)), int(scale*(y2-y1)))
 
     M = cv2.getRotationMatrix2D((size[0]/2, size[1]/2), angle, 1.0)
-    cropped = cv2.getRectSubPix(ct_data_32bit, size, center) 
+    cropped = cv2.getRectSubPix(ct_data_8bit, size, center) 
     cropped = cv2.warpAffine(cropped, M, size)
 
     croppedW = W if not rotated else H
@@ -188,7 +187,7 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
         ax2 = plt.subplot(122)
         ax2.imshow(image, cmap=matplotlib.cm.gray)
         ax2.set_title('Cropped and rotated')
-    image_16bit = image.astype('uint16')
+    image = image.astype('uint16')
     return image, xml
 
 ###############################################################################
