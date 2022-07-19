@@ -68,9 +68,7 @@ def linescan_in(filename='',xml_fname=''):
         tk_root.destroy()
         if not filename:
             sys.exit()
-    im = cv2.imread(filename)
-    if np.size(np.shape(im)) > 2: # normalize rgb bands to 0.0 to 1.0
-        im = bands_to_rgb(im)
+    im = np.flip(cv2.imread(filename, cv2.IMREAD_COLOR))
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     ## Read xml file
