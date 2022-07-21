@@ -176,7 +176,7 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     xml['physical-height'] = image.shape[0]/xml['pixels-per-CM']
     xml['pixel-width'] = image.shape[1]
     xml['scan-lines'] = image.shape[0]
-    image *= 256.
+    image = image*256.
     image = image.astype('uint16')
     if plot is True:
         fig = plt.figure(figsize=(11, 17))
