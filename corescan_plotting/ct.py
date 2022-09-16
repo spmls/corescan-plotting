@@ -145,6 +145,8 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
 
     Xs = [i[0] for i in box]
     Ys = [i[1] for i in box]
+    midpoint = [(crop_x[2]+crop_x[3])/2, 
+            (crop_y[2]+crop_y[3])/2] # midpoint of upper box line
     x1 = min(Xs)
     x2 = max(Xs)
     y1 = min(Ys)
@@ -176,7 +178,7 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     xml['physical-height'] = image.shape[0]/xml['pixels-per-CM']
     xml['pixel-width'] = image.shape[1]
     xml['scan-lines'] = image.shape[0]
-    xml['physical-top'] = xml['physical-top'] - croppedH/xml['pixels-per-CM']
+    xml['physical-top'] = xml['physical-top'] +midpoint[1]/xml['pixels-per-CM']
     image = np.array(image*256).astype('int')
     if plot is True:
         fig = plt.figure(figsize=(11, 17))
