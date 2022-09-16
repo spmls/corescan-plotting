@@ -176,12 +176,8 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     xml['physical-height'] = image.shape[0]/xml['pixels-per-CM']
     xml['pixel-width'] = image.shape[1]
     xml['scan-lines'] = image.shape[0]
-<<<<<<< HEAD
-    image = image*256.
-    image = image.astype('uint16')
-=======
+    xml['physical-top'] = xml['physical-top'] - croppedH/xml['pixels-per-CM']
     image = np.array(image*256).astype('int')
->>>>>>> aa5dc21c119fac2c5721b42e3a05d52a22e470f4
     if plot is True:
         fig = plt.figure(figsize=(11, 17))
         ax1 = plt.subplot(121)
@@ -285,10 +281,10 @@ def ct_crop_rotate_multiple(ct_data, ct_xml, thresh_val, top_depths, plot=False)
         xml['physical-height'] = image.shape[0]/xml['pixels-per-CM']
         xml['pixel-width'] = image.shape[1]
         xml['scan-lines'] = image.shape[0]
-        xml['physical-top'] = top_depths[i]*100.
+        xml['physical-top'] = top_depths[i]
         xml['coreID'] = ct_xml['coreID']+str(" %d-%d cm"
-                                             % (xml['physical-top']/100,
-                                                xml['physical-top']/100+xml['physical-height']))
+                                             % (xml['physical-top'],
+                                                xml['physical-top']+xml['physical-height']))
         cropped_rotated_xml.append(xml)
 
     # Plot steps if plot=True
