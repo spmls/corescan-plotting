@@ -143,14 +143,13 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     W = rect[1][0]
     H = rect[1][1]
 
-    Xs = [i[0] for i in box]
-    Ys = [i[1] for i in box]
-    midpoint = [(Xs[2]+Xs[3])/2, 
-            (Ys[2]+Ys[3])/2] # midpoint of upper box line
-    x1 = min(Xs)
-    x2 = max(Xs)
-    y1 = min(Ys)
-    y2 = max(Ys)
+    Xs = [i[0] for i in box] # x corners of bounding box
+    Ys = [i[1] for i in box] # y corners of bounding box
+
+    x1, x2 = min(Xs), max(Xs) # min and max x of bounding box
+    y1, y2 = min(Ys), max(Ys) # min and max y of bounding box
+
+    midpoint = [(x1+x2)/2, (y1+y1)/2] # midpoint of upper box line
 
     angle = rect[2]
     rotated = False
