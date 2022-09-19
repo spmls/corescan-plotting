@@ -69,6 +69,7 @@ def linescan_in(filename='',xml_fname=''):
         if not filename:
             sys.exit()
     im = cv2.imread(filename, cv2.IMREAD_COLOR)
+    im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)
     # Determine the directory of the file
     directory = os.path.dirname(filename)
     ## Read xml file
