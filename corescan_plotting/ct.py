@@ -145,8 +145,8 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
 
     Xs = [i[0] for i in box]
     Ys = [i[1] for i in box]
-    midpoint = [(X_s[2]+X_s[3])/2, 
-            (Y_s[2]+Y_s[3])/2] # midpoint of upper box line
+    midpoint = [(Xs[2]+Xs[3])/2, 
+            (Ys[2]+Ys[3])/2] # midpoint of upper box line
     x1 = min(Xs)
     x2 = max(Xs)
     y1 = min(Ys)
