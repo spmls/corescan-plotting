@@ -1,4 +1,4 @@
-name: corescan_plotting-dev
+name: corescan_plotting
 channels:
   - conda-forge
   - defaults
