@@ -219,7 +219,7 @@ def ct_crop_rotate_multiple(ct_data, ct_xml, thresh_val, top_depths, plot=False)
     ret, thresh = cv2.threshold(blur, thresh_val, 256, 1)
     thresh = 255-thresh
     # Find contours of threshold image
-    image, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,
                                                   cv2.CHAIN_APPROX_SIMPLE)
 
     # Sort contours from top to bottom
