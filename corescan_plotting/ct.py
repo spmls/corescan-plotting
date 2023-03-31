@@ -156,11 +156,13 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     if angle < -45:
         angle += 90
         rotated = True
+    else:
+        angle = angle-90
 
     center = (int((x1+x2)/2), int((y1+y2)/2))
     size = (int(scale*(x2-x1)), int(scale*(y2-y1)))
 
-    M = cv2.getRotationMatrix2D((size[0]/2, size[1]/2), angle, 1.0)
+    M = cv2.getRotationMatrix2D((size[1]/2, size[0]/2), angle, 1.0)
     cropped = cv2.getRectSubPix(ct_data_8bit, size, center) 
     cropped = cv2.warpAffine(cropped, M, size)
 
@@ -168,9 +170,9 @@ def auto_crop_rotate(ct_data, ct_xml, thresh_val, plot=False):
     croppedH = H if not rotated else W
 
     image = cv2.getRectSubPix(
-        cropped, (int(croppedW*scale), int(croppedH*scale)),
+        cropped, (int(croppedH*scale), int(croppedW*scale)),
         (size[0]/2, size[1]/2))
-
+    
     # Update xml so that new images scale correctly, list of dictionaries
     xml = ct_xml.copy()
     xml['physical-width'] = image.shape[1]/xml['pixels-per-CM']
