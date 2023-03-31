@@ -1,0 +1,13 @@
+name: corescan_plotting
+channels:
+  - conda-forge
+  - base
+dependencies:
+  - python
+  - numpy
+  - scikit-image
+  - matplotlib
+  - scipy
+  - exifread
+  - opencv
+  - pandas
