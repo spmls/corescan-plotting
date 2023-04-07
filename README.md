@@ -1,5 +1,5 @@
 
-| CI          | [![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![Anaconda-Server Badge][latest-update-badge][latest-update-link]]                 		                       |
+| CI          | [![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![Anaconda-Server Badge][latest-update-badge]][latest-update-link]                		                       |
 | :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | **Package** |                                                          [![Conda][conda-badge]][conda-link] [![PyPI][pypi-badge]][pypi-link]                                                          |
 | **License** |                                                                         [![License][license-badge]][repo-link]									       |
