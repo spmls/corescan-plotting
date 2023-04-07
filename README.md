@@ -37,7 +37,7 @@ plt.show()
 [github-ci-badge]: https://img.shields.io/github/actions/workflow/status/xarray-contrib/datatree/main.yaml?branch=main&label=CI&logo=github
 [github-ci-link]: https://github.com/spmls/corescan_plotting/actions?query=workflow%3ACI
 [latest-update-badge]: https://anaconda.org/conda-forge/qutip/badges/latest_release_date.svg
-[latest-update-link]: https://img.shields.io/github/last-commit/spmls/corescan_plotting
+[latest-update-link]: https://anaconda.org/spmls/corescan_plotting
 [pypi-badge]: https://img.shields.io/pypi/v/xarray-datatree?logo=pypi
 [pypi-link]: https://pypi.org/project/corescan-plotting/
 [conda-badge]: https://img.shields.io/conda/vn/conda-forge/xarray-datatree?logo=anaconda
