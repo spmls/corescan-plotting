@@ -1,5 +1,5 @@
 
-| CI          | [![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![latest update][latest-update-badge][latest-update-link]]                  		               |
+| CI          | [![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![Anaconda-Server Badge](https://anaconda.org/spmls/corescan_plotting/badges/latest_release_date.svg)](https://anaconda.org/spmls/corescan_plotting)|                  		               |
 | :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | **Package** |                                                          [![Conda][conda-badge]][conda-link] [![PyPI][pypi-badge]][pypi-link]                                                          |
 | **License** |                                                                         [![License][license-badge]][repo-link]									       |
