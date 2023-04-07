@@ -1,5 +1,5 @@
 
-| CI          | [![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![anaconda latest release data][latest-release-badge][latest-release-link]]                  		               |
+| CI          | [![GitHub Workflow Status][github-ci-badge]][github-ci-link] [![latest update][latest-update-badge][latest-update-link]]                  		               |
 | :---------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | **Package** |                                                          [![Conda][conda-badge]][conda-link] [![PyPI][pypi-badge]][pypi-link]                                                          |
 | **License** |                                                                         [![License][license-badge]][repo-link]									       |
@@ -36,8 +36,8 @@ plt.show()
 
 [github-ci-badge]: https://img.shields.io/github/actions/workflow/status/xarray-contrib/datatree/main.yaml?branch=main&label=CI&logo=github
 [github-ci-link]: https://github.com/spmls/corescan_plotting/actions?query=workflow%3ACI
-[latest-release-badge]: https://anaconda.org/conda-forge/qutip/badges/latest_release_date.svg
-[latest-release-link]: https://img.shields.io/github/release-date/spmls/corescan_plotting
+[latest-update-badge]: https://anaconda.org/conda-forge/qutip/badges/latest_release_date.svg
+[latest-update-link]: https://img.shields.io/github/last-commit/spmls/corescan_plotting
 [pypi-badge]: https://img.shields.io/pypi/v/xarray-datatree?logo=pypi
 [pypi-link]: https://pypi.org/project/corescan-plotting/
 [conda-badge]: https://img.shields.io/conda/vn/conda-forge/xarray-datatree?logo=anaconda
